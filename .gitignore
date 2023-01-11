@@ -24,4 +24,3 @@ coverage.json
 .idea
 .openzeppelin/mainnet.json
 .openzeppelin/unknown-97.json
-src/test/
