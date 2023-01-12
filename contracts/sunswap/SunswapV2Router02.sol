@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import './interfaces/ISunswapV2Router02.sol';
 
-import './interfaces/IERC20.sol';
+import '../interfaces/IERC20.sol';
 import './interfaces/ISunswapV2Factory.sol';
 import './interfaces/ISunswapV2ERC20.sol';
 import './interfaces/IWETH.sol';
