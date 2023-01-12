@@ -26,7 +26,7 @@ library SunswapV2Library {
                             bytes1(0xff),
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"9dd9bfc2f6c1103a6c01d9c6a4044e4b8a9361f92df2728cdc3729922d56748e" // init code hash
+                            hex"c124c4cafa4a6e8fc96f129fd53e432212037374cbd39df8cc1aa892e2034f30" // init code hash
                         )
                     )
                 )

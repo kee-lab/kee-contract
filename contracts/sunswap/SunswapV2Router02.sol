@@ -10,6 +10,7 @@ import './interfaces/IWETH.sol';
 import '../libraries/TransferHelper.sol';
 import '../libraries/SafeMath.sol';
 import '../libraries/SunswapV2Library.sol';
+import "hardhat/console.sol";
 
 contract SunswapV2Router02 is ISunswapV2Router02 {
     using SafeMath for uint;
@@ -18,6 +19,8 @@ contract SunswapV2Router02 is ISunswapV2Router02 {
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
+        console.log("deadline: {}" ,deadline);
+        console.log("block.timestamp: {}" ,block.timestamp);
         require(deadline >= block.timestamp, 'SunswapV2Router: EXPIRED');
         _;
     }

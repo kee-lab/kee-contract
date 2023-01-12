@@ -1,4 +1,4 @@
-import { expect } from "chai";
+import { expect, use } from "chai";
 import { MockProvider } from "ethereum-waffle";
 import { BigNumber, BigNumberish, Contract, Wallet } from "ethers";
 import { ethers, upgrades, waffle } from "hardhat";
@@ -27,6 +27,7 @@ describe("BananaSwapV2PairFeeTo", () => {
 		const ReaToken = await ethers.getContractFactory("ReaToken");
 		const reaToken = await ReaToken.deploy();
 		await reaToken.initialize("REA token","REA");
+		
 		console.log("init read token!");
 
 		const SmartERC20 = await ethers.getContractFactory("SmartERC20");
@@ -37,14 +38,18 @@ describe("BananaSwapV2PairFeeTo", () => {
 		const v2factory = await ethers.getContractFactory("SunswapV2Factory");
 		const factoryV2 = await v2factory.deploy(wallet.address);
 
+		const SunswapV2Router02 = await ethers.getContractFactory("SunswapV2Router02");
+		const sunswapV2Router02 = await SunswapV2Router02.deploy(factoryV2.address,reaToken.address);
+		
 
 		
 		const oracleFactory = await ethers.getContractFactory("ExampleOracleSimple");
 		const oracle = await oracleFactory.deploy();
-
 		// initialize V2
 		await factoryV2.createPair(reaToken.address, usdt.address);
 		const reaUsdtPairAddress = await factoryV2.getPair(reaToken.address, usdt.address);
+		const token0Amount = expandTo18Decimals(5);
+		await oracle.initialize(factoryV2.address,reaToken.address,usdt.address,reaUsdtPairAddress,token0Amount);
 		const codeHashOfPair = await factoryV2.PAIR_HASH();
     	console.log("codeHashOfPair is:", codeHashOfPair);
 		
@@ -54,24 +59,38 @@ describe("BananaSwapV2PairFeeTo", () => {
 			user,
 			usdt,
 			oracle,
+			sunswapV2Router02,
+			reaToken
 		};
 	}
 
-	describe("swapExactTokensForTokens", () => {
-		// const token0Amount = expandTo18Decimals(5);
-		// const token1Amount = expandTo18Decimals(10);
+	describe("Orcale test", () => {
+		const token0Amount = expandTo18Decimals(5);
+		const token1Amount = expandTo18Decimals(10);
 		// const swapAmount = expandTo18Decimals(1);
 		// const expectedOutputAmount = BigNumber.from("1662497915624478906");
+		
 
-		it("usdt swap tokenA origin", async () => {
+		it("get token price", async () => {
 			const { factoryV2,
 				wallet,
 				user,
 				usdt,
-				oracle, } = await loadFixture(
+				oracle,sunswapV2Router02,
+				reaToken
+			
+			} = await loadFixture(
 				v2Fixture
 			);
 
+			await reaToken.mint(wallet.address,token0Amount);
+			await usdt.mint(wallet.address,token1Amount);
+			await reaToken.approve(sunswapV2Router02.address,token0Amount);
+			await usdt.approve(sunswapV2Router02.address,token1Amount);
+			await sunswapV2Router02.addLiquidity(reaToken.address,usdt.address,token0Amount,token1Amount,0,0,wallet.address,9673481508);
+			let tokenPrice = await oracle.getTokenAprice();
+			console.log("tokenPrice is:{}",tokenPrice);
+			
 		});
 
 	});

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/ISunswapV2Pair.sol";
 import "./FixedPoint.sol";
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library UniswapOracleLibrary {
@@ -40,6 +40,8 @@ library UniswapOracleLibrary {
     ) internal view returns (uint224 price0, uint224 price1) {
         // if time has elapsed since the last update on the pair, mock the accumulated price values
         (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
+        console.log("reserv0 is:{} " , reserve0);
+        console.log("reserve1 is:{} " , reserve1);
         // addition overflow is desired
         // counterfactual
         price0 = FixedPoint.fraction(reserve1, reserve0)._x;
