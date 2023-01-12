@@ -5,7 +5,7 @@ import './interfaces/ISunswapV2Pair.sol';
 import './SunswapV2ERC20.sol';
 import '../libraries/Math.sol';
 import '../libraries/UQ112x112.sol';
-import './interfaces/IERC20.sol';
+import '../interfaces/IERC20.sol';
 import './interfaces/ISunswapV2Factory.sol';
 import './interfaces/ISunswapV2Callee.sol';
 import '../libraries/TransferHelper.sol';
