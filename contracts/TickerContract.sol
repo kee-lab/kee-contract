@@ -33,7 +33,7 @@ contract TickerContract is OwnableUpgradeable {
         uint256 minerLevel;
         uint256 payAmount;
         bool isUsed;
-        uint256 minerMultiPle;
+        uint256 multiple;
     }
 
     event TickerBuy(address indexed buyer, uint256 minerLevel, uint256 payAmount,uint index);
@@ -44,12 +44,13 @@ contract TickerContract is OwnableUpgradeable {
     function buyTicker(
         address buyer,
         uint256 minerLevel,
-        uint256 payAmount
+        uint256 payAmount,
+        uint256 multiple
     ) public onlyManager {
         tickerIndex += 1;
         //receive user money
         payToken.transferFrom(buyer, address(this), payAmount);
-        Ticker memory ticker = Ticker(buyer,minerLevel, payAmount,false);
+        Ticker memory ticker = Ticker(buyer,minerLevel, payAmount,false,multiple);
         userTickMap[buyer][tickerIndex]=ticker;
         emit TickerBuy(buyer,minerLevel, payAmount,tickerIndex);
     }

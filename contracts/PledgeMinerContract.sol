@@ -58,7 +58,6 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 tickerIndex,
         uint256 payAmount,
         uint256 usdtAmount,
-        uint256 multiple,
         uint256 valueAmount,
         address rewardToken
     ) public onlyManager {
@@ -84,12 +83,13 @@ contract PledgeMinerContract is OwnableUpgradeable {
             user: buyer,
             tickerIndex: tickerIndex,
             level: ticker.minerLevel,
-            multiple: multiple,
+            multiple: ticker.multiple,
             valueAmount: valueAmount,
             payAmount: payAmount,
             usdtAmount: usdtAmount,
             rewardToken: rewardToken
         });
+        
         minerIndex += 1;
         userMinerMap[buyer][minerIndex] = miner;
 
