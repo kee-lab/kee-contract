@@ -18,12 +18,13 @@ contract PledgeMinerContract is OwnableUpgradeable {
     address public teamRewardAddress;
     uint256 public teamRewardPercent;
     uint public base=100;   //  base 
+    //store the fee token
+    address public claimAccountAddress;
     mapping(address => mapping(uint256 => Miner)) public userMinerMap;
 
-    
+    // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profile amount
+
     mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
-
-
 
     //onlyManager
     modifier onlyManager() {
@@ -39,7 +40,8 @@ contract PledgeMinerContract is OwnableUpgradeable {
         address _ecologyAddress,
         uint256 _ecologyPercent,
         address _teamRewardAddress,
-        uint256 _teamRewardPercent
+        uint256 _teamRewardPercent,
+        address _claimAccountAddress
     ) public initializer {
         payToken = IERC20(_payToken);
         usdtToken = IERC20(_usdtToken);
@@ -51,6 +53,36 @@ contract PledgeMinerContract is OwnableUpgradeable {
         teamRewardPercent = _teamRewardPercent;
         __Ownable_init();
         isManager[msg.sender] = true;
+        levelFeeMapping[1] = 2; 
+        levelFeeMapping[2] = 4;
+        levelFeeMapping[3] = 6; 
+        levelFeeMapping[4] = 10; 
+        levelFeeMapping[5] = 20; 
+        claimAccountAddress = _claimAccountAddress;
+    }
+
+
+    function claimProfit(address userAddress,uint _minerIndex,uint profitAmount)public onlyManager{
+        
+        
+        Miner storage miner = userMinerMap[userAddress][_minerIndex];
+        // check the ticker is exist
+        require(miner.user == userAddress, "the user is not the buyer");
+        //TODO check the left money to less than the profitAmount
+        uint claimRewardAmount = miner.claimRewardAmount;
+        uint rewardAmount = miner.valueAmount*miner.multiple;
+        require(claimRewardAmount+profitAmount<=rewardAmount,"claim amount too high!");
+        if (claimRewardAmount+profitAmount<=rewardAmount){
+            //TODO: 退出该矿机。
+        }
+        // TODO:增加矿机的转账金额并提现给用户。发送提现事件
+        
+
+        //receive the fee
+        uint minerLevel = miner.level;
+        uint drawFee = levelFeeMapping[minerLevel]*payToken.decimals();
+        payToken.transferFrom(userAddress, claimAccountAddress, drawFee);
+        // transfer profile to user
     }
 
     
@@ -64,6 +96,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 payAmount; // pay REA amount
         uint256 usdtAmount; // pay usdt amount
         address rewardToken; // reward token
+        uint claimRewardAmount; // claim reward amount
     }
 
     //pledge the miner
@@ -79,7 +112,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
             buyer,
             tickerIndex
         );
-        //
+        // check the ticker is exist
         require(ticker.buyer == buyer, "the user is not the buyer");
         require(ticker.isUsed == true, "ticker is used");
         //notice tickerContract.useTicker method can be called by manager,so must set this contract is the manager of the tickerContract
@@ -105,7 +138,8 @@ contract PledgeMinerContract is OwnableUpgradeable {
             valueAmount: valueAmount,
             payAmount: payAmount,
             usdtAmount: usdtAmount,
-            rewardToken: ticker.rewardTokenAddress
+            rewardToken: ticker.rewardTokenAddress,
+            claimRewardAmount:0
         });
 
         minerIndex += 1;
@@ -155,10 +189,18 @@ contract PledgeMinerContract is OwnableUpgradeable {
         ecologyPercent = _ecologyPercent;
     }
 
+    function setLevelFee(uint level,uint fee) public onlyManager {
+        levelFeeMapping[level]=fee;
+    }
+
     function setTeamRewardPercent(uint256 _teamRewardPercent)
         public
         onlyManager
     {
         teamRewardPercent = _teamRewardPercent;
+    }
+
+    function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
+        claimAccountAddress = _claimAccountAddress;
     }
 }

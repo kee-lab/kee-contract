@@ -14,14 +14,8 @@ contract TickerContract is OwnableUpgradeable {
     // please prepare reward token in this account and approve max amount to this contract.
     address public tickerRewardAccount;
 
+    //store the fee token
     address public claimAccountAddress;
-    function setEcologyAddress(address _claimAccountAddress) public onlyManager {
-        claimAccountAddress = _claimAccountAddress;
-    }
-
-    function claim(uint claimAmout)public onlyManager{
-        payToken.transfer(claimAccountAddress, claimAmout);
-    }
 
     uint public rewardMul = 2; //reward mutiple
 
@@ -65,7 +59,7 @@ contract TickerContract is OwnableUpgradeable {
     ) public onlyManager {
         tickerIndex += 1;
         //receive user money
-        payToken.transferFrom(buyer, address(this), payAmount);
+        payToken.transferFrom(buyer, claimAccountAddress, payAmount);
         Ticker memory ticker = Ticker(buyer,minerLevel, payAmount,false,multiple,rewardTokenAddress);
         userTickMap[buyer][tickerIndex]=ticker;
         emit TickerBuy(buyer,minerLevel, payAmount,tickerIndex);
@@ -101,6 +95,10 @@ contract TickerContract is OwnableUpgradeable {
 
     function setRewardMultiple(uint _rewardMul) public onlyManager {
         rewardMul = _rewardMul;
+    }
+
+    function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
+        claimAccountAddress = _claimAccountAddress;
     }
 
     
