@@ -6,7 +6,7 @@ import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
 
 contract PledgeMinerContract is OwnableUpgradeable {
-    IERC20 public payToken; // is REA token to buy the ticker
+    IERC20 public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
     mapping(address => bool) public isManager;
@@ -22,7 +22,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
     address public claimAccountAddress;
     mapping(address => mapping(uint256 => Miner)) public userMinerMap;
 
-    // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profile amount
+    // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
 
     mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
 
@@ -33,8 +33,9 @@ contract PledgeMinerContract is OwnableUpgradeable {
     }
 
     function initialize(
-        address _payToken,
+        address _reaToken,
         address _usdtToken,
+        address _profileToken,
         address _blackholeAddress,
         uint256 _blackHolePercent,
         address _ecologyAddress,
@@ -43,7 +44,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 _teamRewardPercent,
         address _claimAccountAddress
     ) public initializer {
-        payToken = IERC20(_payToken);
+        reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
         blackholeAddress = _blackholeAddress;
         blackHolePercent = _blackHolePercent;
@@ -70,20 +71,38 @@ contract PledgeMinerContract is OwnableUpgradeable {
         require(miner.user == userAddress, "the user is not the buyer");
         //TODO check the left money to less than the profitAmount
         uint claimRewardAmount = miner.claimRewardAmount;
-        uint rewardAmount = miner.valueAmount*miner.multiple;
-        require(claimRewardAmount+profitAmount<=rewardAmount,"claim amount too high!");
-        if (claimRewardAmount+profitAmount<=rewardAmount){
-            //TODO: 退出该矿机。
-        }
-        // TODO:增加矿机的转账金额并提现给用户。发送提现事件
-        
+        uint profitAmount = miner.profitAmount; // 挖矿奖励金额。即为质押金额*矿机的倍数
+        require(claimRewardAmount+profitAmount<=profitAmount,"claim amount too high!");
 
         //receive the fee
         uint minerLevel = miner.level;
-        uint drawFee = levelFeeMapping[minerLevel]*payToken.decimals();
-        payToken.transferFrom(userAddress, claimAccountAddress, drawFee);
-        // transfer profile to user
+        uint drawFee = levelFeeMapping[minerLevel]*reaToken.decimals();
+        reaToken.transferFrom(userAddress, claimAccountAddress, drawFee);
+
+        if (claimRewardAmount+profitAmount == profitAmount){
+            //TODO: 退出该矿机。
+            miner.isExit = true;
+        }
+        // TODO:增加矿机的转账金额并提现给用户。发送提现事件
+        claimRewardAmount += profitAmount;
+        IERC20 profileToken = IERC20(miner.profitToken);
+        // transfer profit to user
+        profileToken.transferFrom(address(this),userAddress, profitAmount);
+        
+        // emit the ClaimPorfit event
+            miner.isExit = true;
+        emit ClaimProfit(userAddress,minerIndex,minerLevel,miner.multiple,profitAmount,drawFee,miner.profitToken);
     }
+
+    event ClaimProfit(
+        address user,
+        uint256 minerIndex,
+        uint256 level,
+        uint256 multiple,
+        uint256 profitAmount,
+        uint256 feeAmount,
+        address profileToken
+    );
 
     
 
@@ -92,11 +111,13 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 tickerIndex;
         uint256 level;
         uint256 multiple; // the reward multiple
-        uint256 valueAmount; //total usdt value
+        uint256 profitAmount; //total reward value
         uint256 payAmount; // pay REA amount
         uint256 usdtAmount; // pay usdt amount
         address rewardToken; // reward token
+        address profitToken; // profit token
         uint claimRewardAmount; // claim reward amount
+        bool isExit;             //is exit
     }
 
     //pledge the miner
@@ -105,7 +126,8 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 tickerIndex,
         uint256 payAmount,
         uint256 usdtAmount,
-        uint256 valueAmount
+        uint256 profitAmount,
+        address profitToken
     ) public onlyManager {
         //query user have the ticker
         TickerContract.Ticker memory ticker = tickerContract.getUserTick(
@@ -119,10 +141,10 @@ contract PledgeMinerContract is OwnableUpgradeable {
         tickerContract.useTicker(buyer, tickerIndex);
         //receive user money
         if (payAmount > 0) {
-            payToken.transferFrom(buyer, address(this), payAmount);
-            payToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
-            payToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
-            payToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
+            reaToken.transferFrom(buyer, address(this), payAmount);
+            reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
+            reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
+            reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
 
         }
         if (usdtAmount > 0) {
@@ -135,25 +157,29 @@ contract PledgeMinerContract is OwnableUpgradeable {
             tickerIndex: tickerIndex,
             level: ticker.minerLevel,
             multiple: ticker.multiple,
-            valueAmount: valueAmount,
+            profitAmount: profitAmount,
             payAmount: payAmount,
             usdtAmount: usdtAmount,
             rewardToken: ticker.rewardTokenAddress,
-            claimRewardAmount:0
+            profitToken:profitToken,
+            claimRewardAmount:0,
+            isExit : false
         });
 
         minerIndex += 1;
         userMinerMap[buyer][minerIndex] = miner;
 
         // emit a pledge event
+        emit PledgeMiner(buyer,tickerIndex,ticker.minerLevel,ticker.multiple,profitAmount,payAmount,usdtAmount,ticker.rewardTokenAddress);
     }
+
 
     event PledgeMiner(
         address user,
         uint256 tickerIndex,
         uint256 level,
         uint256 multiple,
-        uint256 valueAmount,
+        uint256 profitAmount,
         uint256 payAmount,
         uint256 usdtAmount,
         address rewardToken
