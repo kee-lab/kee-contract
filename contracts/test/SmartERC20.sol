@@ -25,7 +25,7 @@ contract SmartERC20 is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function mint(address _toAddress,uint256 _mintNum) public onlyOwner {
-        _mint(_toAddress, _mintNum*10**6);
+        _mint(_toAddress, _mintNum);
     }
 
     // function setLabsAddress(address _labsAddress) public onlyOwner {

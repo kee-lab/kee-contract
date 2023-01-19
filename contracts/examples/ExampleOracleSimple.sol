@@ -83,7 +83,7 @@ contract ExampleOracleSimple is IOracle, OwnableUpgradeable {
     }
 
     //get the real time price tokenA
-    function getTokenAprice()external view returns(uint price){
+    function getTokenPrice()external view returns(uint price){
         console.log(address(pair));
         (uint224 price0, uint224 price1) = UniswapOracleLibrary.currentTokenAUsdtPrice(pair);
         if(tokenAIsToken0){
@@ -92,6 +92,8 @@ contract ExampleOracleSimple is IOracle, OwnableUpgradeable {
             price = price1;
         }
     }
+
+    
 
     // 计算价格变化。
     function getPriceChangeRatio()external override view returns(uint256 priceChangeRatio){

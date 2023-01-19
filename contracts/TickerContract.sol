@@ -19,7 +19,7 @@ contract TickerContract is OwnableUpgradeable {
 
     uint public rewardMul = 2; //reward mutiple
 
-    uint tickerIndex = 0;
+    uint public tickerIndex  = 0;
 
     //onlyManager
     modifier onlyManager() {
@@ -42,10 +42,10 @@ contract TickerContract is OwnableUpgradeable {
         uint256 payAmount;
         bool isUsed;
         uint256 multiple;
-        address rewardTokenAddress;
+        address profitToken;
     }
 
-    event TickerBuy(address indexed buyer, uint256 minerLevel, uint256 payAmount,uint index);
+    event TickerBuy(address indexed buyer, uint256 minerLevel, uint256 payAmount,uint multiple,uint index,address profitToken);
     event DestoryTicker(address indexed buyer, uint256 index);
     event RewardTicker(address indexed buyer,uint256 rewardAmount);
 
@@ -53,16 +53,16 @@ contract TickerContract is OwnableUpgradeable {
     function buyTicker(
         address buyer,
         uint256 minerLevel,
-        uint256 payAmount,
+        uint256 tickerPayAmount,
         uint256 multiple,
-        address rewardTokenAddress
+        address profitToken
     ) public onlyManager {
         tickerIndex += 1;
         //receive user money
-        payToken.transferFrom(buyer, claimAccountAddress, payAmount);
-        Ticker memory ticker = Ticker(buyer,minerLevel, payAmount,false,multiple,rewardTokenAddress);
+        payToken.transferFrom(buyer, claimAccountAddress, tickerPayAmount);
+        Ticker memory ticker = Ticker(buyer,minerLevel, tickerPayAmount,false,multiple,profitToken);
         userTickMap[buyer][tickerIndex]=ticker;
-        emit TickerBuy(buyer,minerLevel, payAmount,tickerIndex);
+        emit TickerBuy(buyer,minerLevel, tickerPayAmount,multiple,tickerIndex,profitToken);
     }
 
     // this method only called by manager。 If anyone calle this method is very dangerous

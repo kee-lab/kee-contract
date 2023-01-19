@@ -114,7 +114,6 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 profitAmount; //total reward value
         uint256 payAmount; // pay REA amount
         uint256 usdtAmount; // pay usdt amount
-        address rewardToken; // reward token
         address profitToken; // profit token
         uint claimRewardAmount; // claim reward amount
         bool isExit;             //is exit
@@ -126,8 +125,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 tickerIndex,
         uint256 payAmount,
         uint256 usdtAmount,
-        uint256 profitAmount,
-        address profitToken
+        uint256 profitAmount
     ) public onlyManager {
         //query user have the ticker
         TickerContract.Ticker memory ticker = tickerContract.getUserTick(
@@ -160,8 +158,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
             profitAmount: profitAmount,
             payAmount: payAmount,
             usdtAmount: usdtAmount,
-            rewardToken: ticker.rewardTokenAddress,
-            profitToken:profitToken,
+            profitToken:ticker.profitToken,
             claimRewardAmount:0,
             isExit : false
         });
@@ -170,7 +167,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
         userMinerMap[buyer][minerIndex] = miner;
 
         // emit a pledge event
-        emit PledgeMiner(buyer,tickerIndex,ticker.minerLevel,ticker.multiple,profitAmount,payAmount,usdtAmount,ticker.rewardTokenAddress);
+        emit PledgeMiner(buyer,tickerIndex,ticker.minerLevel,ticker.multiple,profitAmount,payAmount,usdtAmount,ticker.profitToken);
     }
 
 
@@ -182,7 +179,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
         uint256 profitAmount,
         uint256 payAmount,
         uint256 usdtAmount,
-        address rewardToken
+        address profitToken
     );
 
     function setManager(address _manager, bool _flag) public onlyOwner {

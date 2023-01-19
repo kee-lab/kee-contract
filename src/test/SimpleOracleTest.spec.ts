@@ -17,7 +17,7 @@ import {
 import exp from "constants";
 const baseRatio = 10000;
 
-describe("BananaSwapV2PairFeeTo", () => {
+describe("Oracle initialize and test", () => {
 	const loadFixture = waffle.createFixtureLoader(
 		waffle.provider.getWallets(),
 		waffle.provider
@@ -88,7 +88,7 @@ describe("BananaSwapV2PairFeeTo", () => {
 			await reaToken.approve(sunswapV2Router02.address,token0Amount);
 			await usdt.approve(sunswapV2Router02.address,token1Amount);
 			await sunswapV2Router02.addLiquidity(reaToken.address,usdt.address,token0Amount,token1Amount,0,0,wallet.address,9673481508);
-			let tokenPrice = await oracle.getTokenAprice();
+			let tokenPrice = await oracle.getTokenPrice();
 			console.log("tokenPrice is:{}",tokenPrice);
 			
 		});
