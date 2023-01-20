@@ -26,9 +26,9 @@ describe("Ticker contract init and test", () => {
 	);
 
 	async function v2Fixture([wallet, user,tickerRewardAccount,claimAccount]: Wallet[], provider: MockProvider) {
-		// const ReaToken = await ethers.getContractFactory("ReaToken");
-		// const reaToken = await ReaToken.deploy();
-		// await reaToken.initialize("REA token","REA");
+		const ReaToken = await ethers.getContractFactory("ReaToken");
+		const reaToken = await ReaToken.deploy();
+		await reaToken.initialize("REA token","REA");
 		
 		console.log("init read token!");
 
@@ -36,8 +36,8 @@ describe("Ticker contract init and test", () => {
 		const usdt = await SmartERC20.deploy();
 		await usdt.initialize("usdt token", "USDT");
 
-		const reaToken = await SmartERC20.deploy();
-		await reaToken.initialize("REA token","REA");
+		// const reaToken = await SmartERC20.deploy();
+		// await reaToken.initialize("REA token","REA");
 
 		const fil = await SmartERC20.deploy();
 		await fil.initialize("fil token", "fil");
@@ -89,7 +89,7 @@ describe("Ticker contract init and test", () => {
 		// const expectedOutputAmount = BigNumber.from("1662497915624478906");
 		
 
-		it("get token price", async () => {
+		it("buy ticker by REA", async () => {
 			const { factoryV2,
 				wallet,
 				user,
@@ -119,21 +119,22 @@ describe("Ticker contract init and test", () => {
 			let humanTokenPrice = tokenPrice.div(BigNumber.from(2).pow(112));
 			console.log("humanTokenPrice is:{}",humanTokenPrice);
 			await oracle.update();
-			let payAmount = tickerPayAmount.mul(reaTokenDecimal).mul(humanTokenPrice).div(usdtDecimal)
+			let payAmount = tickerPayAmount.mul(humanTokenPrice);
 			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
 			console.log("payAmount is:{}", payAmount);
 			
 			await expect(tickerContract.connect(user).buyTicker(user.address,1,payAmount,3,fil.address,{from:user.address})).to.be.revertedWith("Not manager");
 			await reaToken.mint(user.address,token0Amount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
-			console.log(balanceOfUser);
-			console.log(payAmount);
+			console.log("balanceOfUser is:",balanceOfUser);
 			await reaToken.connect(user).approve(tickerContract.address,token0Amount,{from:user.address});
 			await tickerContract.setManager(user.address,true);
 			let minerLevel = 1;
 			let multiple = 3;
 			let tx = await tickerContract.connect(user).buyTicker(user.address,minerLevel,payAmount,multiple,fil.address,{from:user.address});
 			let receipt = await tx.wait();
+			console.log("token0Amount is:",token0Amount);
+			console.log("payAmount is:",payAmount);
 			expect(await reaToken.balanceOf(user.address)).to.be.equal(token0Amount.sub(payAmount));
 			let userTicker = await tickerContract.getUserTick(user.address,1);
 			// console.log("userTicker is:",userTicker);
