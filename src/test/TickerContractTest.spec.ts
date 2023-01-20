@@ -107,34 +107,42 @@ describe("Ticker contract init and test", () => {
 			);
 
 			await reaToken.mint(wallet.address,token0Amount);
+			let reaTokenDecimal = await reaToken.decimals();
+			console.log("reaTokenDecimal",reaTokenDecimal);
 			await usdt.mint(wallet.address,token1Amount);
+			let usdtDecimal = await usdt.decimals();
+			console.log("usdtDecimal",usdtDecimal);
 			await reaToken.approve(sunswapV2Router02.address,token0Amount);
 			await usdt.approve(sunswapV2Router02.address,token1Amount);
 			await sunswapV2Router02.addLiquidity(reaToken.address,usdt.address,token0Amount,token1Amount,0,0,wallet.address,9673481508);
 			let tokenPrice = await oracle.getTokenPrice();
 			let humanTokenPrice = tokenPrice.div(BigNumber.from(2).pow(112));
-			console.log("tokenPrice is:{}",humanTokenPrice);
+			console.log("humanTokenPrice is:{}",humanTokenPrice);
+			await oracle.update();
+			let payAmount = tickerPayAmount.mul(reaTokenDecimal).mul(humanTokenPrice).div(usdtDecimal)
+			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
+			console.log("payAmount is:{}", payAmount);
 			
-			await expect(tickerContract.connect(user).buyTicker(user.address,1,tickerPayAmount,3,fil.address,{from:user.address})).to.be.revertedWith("Not manager");
+			await expect(tickerContract.connect(user).buyTicker(user.address,1,payAmount,3,fil.address,{from:user.address})).to.be.revertedWith("Not manager");
 			await reaToken.mint(user.address,token0Amount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log(balanceOfUser);
-			console.log(tickerPayAmount);
+			console.log(payAmount);
 			await reaToken.connect(user).approve(tickerContract.address,token0Amount,{from:user.address});
 			await tickerContract.setManager(user.address,true);
 			let minerLevel = 1;
 			let multiple = 3;
-			let tx = await tickerContract.connect(user).buyTicker(user.address,minerLevel,tickerPayAmount,multiple,fil.address,{from:user.address});
+			let tx = await tickerContract.connect(user).buyTicker(user.address,minerLevel,payAmount,multiple,fil.address,{from:user.address});
 			let receipt = await tx.wait();
-			expect(await reaToken.balanceOf(user.address)).to.be.equal(token0Amount.sub(tickerPayAmount));
+			expect(await reaToken.balanceOf(user.address)).to.be.equal(token0Amount.sub(payAmount));
 			let userTicker = await tickerContract.getUserTick(user.address,1);
-			console.log("userTicker is:",userTicker);
+			// console.log("userTicker is:",userTicker);
 			expect(userTicker.buyer).to.be.equal(user.address);
 			expect(userTicker.minerLevel).to.be.equal(minerLevel);
 			let claimAccountAddress = await tickerContract.claimAccountAddress();
 			let balanceOfClaimAccountAddress = await reaToken.balanceOf(claimAccountAddress);
 			console.log("balanceOfClaimAccountAddress is:",balanceOfClaimAccountAddress);
-			expect(balanceOfClaimAccountAddress).to.be.equal(tickerPayAmount);
+			expect(balanceOfClaimAccountAddress).to.be.equal(payAmount);
 			expect(userTicker.isUsed).to.be.equal(false);
 			expect(userTicker.multiple).to.be.equal(multiple);
 			expect(userTicker.profitToken).to.be.equal(fil.address);
@@ -143,11 +151,11 @@ describe("Ticker contract init and test", () => {
 
 			// check the event
 			let tickerBuy = receipt.events?.at(receipt.events?.length-1);
-			console.log("event is:",tickerBuy);
+			// console.log("event is:",tickerBuy);
 			expect(tickerBuy?.event).to.be.equal("TickerBuy");
 			expect(tickerBuy?.args?.buyer).to.be.equal(user.address);
 			expect(tickerBuy?.args?.minerLevel).to.be.equal(minerLevel);
-			expect(tickerBuy?.args?.payAmount).to.be.equal(tickerPayAmount);
+			expect(tickerBuy?.args?.payAmount).to.be.equal(payAmount);
 			expect(tickerBuy?.args?.multiple).to.be.equal(multiple);
 			expect(tickerBuy?.args?.index).to.be.equal(tickerIndex);
 			expect(tickerBuy?.args?.profitToken).to.be.equal(fil.address);

@@ -14,6 +14,10 @@ export function expandTo18Decimals(n: number): BigNumber {
   return BigNumber.from(n).mul(BigNumber.from(10).pow(18));
 }
 
+export function expandTo8Decimals(n: number): BigNumber {
+  return BigNumber.from(n).mul(BigNumber.from(10).pow(8));
+}
+
 function getDomainSeparator(name: string, tokenAddress: string) {
   return keccak256(
     defaultAbiCoder.encode(

@@ -28,6 +28,10 @@ contract ReaToken is ERC20Upgradeable, OwnableUpgradeable {
         _mint(_toAddress, _mintNum*10**6);
     }
 
+    function decimals() public view virtual override returns (uint8) {
+        return 8;
+    }
+
     // function setLabsAddress(address _labsAddress) public onlyOwner {
     //     _setLabsAddress(_labsAddress);
     // }
