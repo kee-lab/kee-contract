@@ -47,7 +47,7 @@ contract TickerContract is OwnableUpgradeable {
 
     event TickerBuy(address indexed buyer, uint256 minerLevel, uint256 payAmount,uint multiple,uint index,address profitToken);
     event DestoryTicker(address indexed buyer, uint256 index);
-    event RewardTicker(address indexed buyer,uint256 rewardAmount);
+    event RewardTicker(address indexed buyer,uint payAmount,uint256 rewardAmount);
 
     //user buy ticker by manager
     function buyTicker(
@@ -66,7 +66,7 @@ contract TickerContract is OwnableUpgradeable {
     }
 
     // this method only called by manager。 If anyone calle this method is very dangerous
-    function rewardTiker(
+    function rewardTicker(
         address buyer,
         uint256 payAmount
     ) public onlyManager {
@@ -74,7 +74,7 @@ contract TickerContract is OwnableUpgradeable {
         require(payToken.balanceOf(tickerRewardAccount)>=rewardAmount,"not enough reward");
         //receive user money
         payToken.transferFrom(tickerRewardAccount,buyer, rewardAmount);
-        emit RewardTicker(buyer,rewardAmount);
+        emit RewardTicker(buyer,payAmount,rewardAmount);
     }
 
     //destroy the ticker to buy the miner

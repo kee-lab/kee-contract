@@ -35,7 +35,6 @@ contract PledgeMinerContract is OwnableUpgradeable {
     function initialize(
         address _reaToken,
         address _usdtToken,
-        address _profileToken,
         address _blackholeAddress,
         uint256 _blackHolePercent,
         address _ecologyAddress,
@@ -63,8 +62,7 @@ contract PledgeMinerContract is OwnableUpgradeable {
     }
 
 
-    function claimProfit(address userAddress,uint _minerIndex,uint profitAmount)public onlyManager{
-        
+    function claimProfit(address userAddress,uint _minerIndex)public onlyManager{
         
         Miner storage miner = userMinerMap[userAddress][_minerIndex];
         // check the ticker is exist
