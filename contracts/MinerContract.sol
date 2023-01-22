@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
 
-contract PledgeMinerContract is OwnableUpgradeable {
+contract MinerContract is OwnableUpgradeable {
     IERC20 public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
