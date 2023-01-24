@@ -20,6 +20,8 @@ contract MinerContract is OwnableUpgradeable {
     uint public base=100;   //  base 
     //store the fee token
     address public claimAccountAddress;
+    //store the usdt token
+    address public storeUsdtAddress;
     mapping(address => mapping(uint256 => Miner)) public userMinerMap;
 
     // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
@@ -41,7 +43,9 @@ contract MinerContract is OwnableUpgradeable {
         uint256 _ecologyPercent,
         address _teamRewardAddress,
         uint256 _teamRewardPercent,
-        address _claimAccountAddress
+        address _claimAccountAddress,
+        address _tickerContractAddress,
+        address _storeUsdtAddress
     ) public initializer {
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
@@ -59,6 +63,8 @@ contract MinerContract is OwnableUpgradeable {
         levelFeeMapping[4] = 10; 
         levelFeeMapping[5] = 20; 
         claimAccountAddress = _claimAccountAddress;
+        tickerContract = TickerContract(_tickerContractAddress);
+        storeUsdtAddress = _storeUsdtAddress;
     }
 
 
@@ -132,7 +138,7 @@ contract MinerContract is OwnableUpgradeable {
         );
         // check the ticker is exist
         require(ticker.buyer == buyer, "the user is not the buyer");
-        require(ticker.isUsed == true, "ticker is used");
+        require(ticker.isUsed == false, "ticker is used");
         //notice tickerContract.useTicker method can be called by manager,so must set this contract is the manager of the tickerContract
         tickerContract.useTicker(buyer, tickerIndex);
         //receive user money
@@ -144,7 +150,7 @@ contract MinerContract is OwnableUpgradeable {
 
         }
         if (usdtAmount > 0) {
-            usdtToken.transferFrom(buyer, address(this), usdtAmount);
+            usdtToken.transferFrom(buyer, storeUsdtAddress, usdtAmount);
         }
 
         // generate the minter
@@ -223,5 +229,9 @@ contract MinerContract is OwnableUpgradeable {
 
     function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
         claimAccountAddress = _claimAccountAddress;
+    }
+
+    function setStoreUsdtAddress(address _storeUsdtAddress) public onlyManager {
+        storeUsdtAddress = _storeUsdtAddress;
     }
 }
