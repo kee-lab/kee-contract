@@ -10,7 +10,6 @@ contract MinerContract is OwnableUpgradeable {
     IERC20 public usdtToken;
     TickerContract public tickerContract;
     mapping(address => bool) public isManager;
-    uint256 minerIndex = 0;
     address public blackholeAddress;    // blackhole address
     uint256 public blackHolePercent;    // blackhole percent
     address public ecologyAddress;
@@ -95,7 +94,7 @@ contract MinerContract is OwnableUpgradeable {
         
         // emit the ClaimPorfit event
             miner.isExit = true;
-        emit ClaimProfit(userAddress,minerIndex,minerLevel,miner.multiple,profitAmount,drawFee,miner.profitToken);
+        emit ClaimProfit(userAddress,_minerIndex,minerLevel,miner.multiple,profitAmount,drawFee,miner.profitToken);
     }
 
     event ClaimProfit(
@@ -167,8 +166,7 @@ contract MinerContract is OwnableUpgradeable {
             isExit : false
         });
 
-        minerIndex += 1;
-        userMinerMap[buyer][minerIndex] = miner;
+        userMinerMap[buyer][tickerIndex] = miner;
 
         // emit a pledge event
         emit PledgeMiner(buyer,tickerIndex,ticker.minerLevel,ticker.multiple,profitAmount,payAmount,usdtAmount,ticker.profitToken);

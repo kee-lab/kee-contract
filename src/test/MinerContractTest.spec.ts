@@ -92,7 +92,7 @@ describe("Miner contract init and test", () => {
 	describe.only("miner test", () => {
 		const token0Amount = expandTo18Decimals(5);
 		const token1Amount = expandTo18Decimals(10);
-		const profitAmount = expandTo18Decimals(10);
+		const minerProfitAmount = expandTo18Decimals(10);
 		const buyTickerUsdtAmount = expandTo18Decimals(10);
 		const minerReaUsdtAmount = expandTo18Decimals(80);
 		const minerUsdtAmount = expandTo18Decimals(120);
@@ -136,8 +136,8 @@ describe("Miner contract init and test", () => {
 			let minerReaAmount = minerReaUsdtAmount.div(humanTokenPrice);
 			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
 			console.log("payAmount is:{}", minerReaAmount);
-
-			await expect(tickerContract.connect(user).buyTicker(user.address, 1, buyTickerReaAmount, 3, fil.address, { from: user.address })).to.be.revertedWith("Not manager");
+			let profitToken = fil.address;
+			await expect(tickerContract.connect(user).buyTicker(user.address, 1, buyTickerReaAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
 			await reaToken.mint(user.address, buyTickerReaAmount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("balanceOfUser is:", balanceOfUser);
@@ -145,7 +145,7 @@ describe("Miner contract init and test", () => {
 			await tickerContract.setManager(user.address, true);
 			let minerLevel = 1;
 			let multiple = 3;
-			let tx = await tickerContract.connect(user).buyTicker(user.address, minerLevel, buyTickerReaAmount, multiple, fil.address, { from: user.address });
+			let tx = await tickerContract.connect(user).buyTicker(user.address, minerLevel, buyTickerReaAmount, multiple, profitToken, { from: user.address });
 			let receipt = await tx.wait();
 			console.log("token0Amount is:", token0Amount);
 			console.log("buyTickerReaAmount is:", buyTickerReaAmount);
@@ -160,20 +160,20 @@ describe("Miner contract init and test", () => {
 			expect(balanceOfClaimAccountAddress).to.be.equal(buyTickerReaAmount);
 			expect(userTicker.isUsed).to.be.equal(false);
 			expect(userTicker.multiple).to.be.equal(multiple);
-			expect(userTicker.profitToken).to.be.equal(fil.address);
+			expect(userTicker.profitToken).to.be.equal(profitToken);
 			let tickerIndex = await tickerContract.tickerIndex();
 			expect(tickerIndex).to.be.equal(1);
 
 			// check the event
-			let tickerBuy = receipt.events?.at(receipt.events?.length - 1);
+			let tickerBuyEvent = receipt.events?.at(receipt.events?.length - 1);
 			// console.log("event is:",tickerBuy);
-			expect(tickerBuy?.event).to.be.equal("TickerBuy");
-			expect(tickerBuy?.args?.buyer).to.be.equal(user.address);
-			expect(tickerBuy?.args?.minerLevel).to.be.equal(minerLevel);
-			expect(tickerBuy?.args?.payAmount).to.be.equal(buyTickerReaAmount);
-			expect(tickerBuy?.args?.multiple).to.be.equal(multiple);
-			expect(tickerBuy?.args?.index).to.be.equal(tickerIndex);
-			expect(tickerBuy?.args?.profitToken).to.be.equal(fil.address);
+			expect(tickerBuyEvent?.event).to.be.equal("TickerBuy");
+			expect(tickerBuyEvent?.args?.buyer).to.be.equal(user.address);
+			expect(tickerBuyEvent?.args?.minerLevel).to.be.equal(minerLevel);
+			expect(tickerBuyEvent?.args?.payAmount).to.be.equal(buyTickerReaAmount);
+			expect(tickerBuyEvent?.args?.multiple).to.be.equal(multiple);
+			expect(tickerBuyEvent?.args?.index).to.be.equal(tickerIndex);
+			expect(tickerBuyEvent?.args?.profitToken).to.be.equal(profitToken);
 
 			// 	address buyer,
 			// uint256 tickerIndex,
@@ -181,7 +181,7 @@ describe("Miner contract init and test", () => {
 			// uint256 usdtAmount,
 			// uint256 profitAmount
 			await expect(minerContract.connect(user)
-				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, profitAmount, { from: user.address }))
+				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address }))
 				.to.be.revertedWith("Not manager");
 			
 			await minerContract.setManager(user.address, true);
@@ -195,19 +195,24 @@ describe("Miner contract init and test", () => {
 			// 这个功能是只有管理员才能调用的。所以需要设置tickerContract的管理员为minerContract
 			await tickerContract.setManager(minerContract.address,true);
 			await expect(minerContract.connect(user)
-				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, profitAmount, { from: user.address }))
+				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address }))
 				.to.be.revertedWith("ERC20: insufficient allowance");
 			
 			await reaToken.mint(user.address,minerReaAmount);
 			await reaToken.connect(user).approve(minerContract.address,minerReaAmount,{from:user.address});
 			await usdtToken.mint(user.address,minerUsdtAmount);
 			await usdtToken.connect(user).approve(minerContract.address,minerUsdtAmount,{from:user.address});
-			await minerContract.connect(user)
-				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, profitAmount, { from: user.address });
+
+
+
+
+			let pledgeTx = await minerContract.connect(user)
+				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address });
+			let pledgeReceipt = await pledgeTx.wait();
 			await expect(minerContract.connect(user)
-				.pledgeMiner(claimAccount.address, tickerIndex, minerReaAmount, minerUsdtAmount, profitAmount, { from: user.address })).to.be.revertedWith("the user is not the buyer");
+				.pledgeMiner(claimAccount.address, tickerIndex, minerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address })).to.be.revertedWith("the user is not the buyer");
 			await expect(minerContract.connect(user)
-				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, profitAmount, { from: user.address })).to.be.revertedWith("ticker is used");
+				.pledgeMiner(user.address, tickerIndex, minerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address })).to.be.revertedWith("ticker is used");
 			let ticker = await tickerContract.getUserTick(user.address,tickerIndex);
 			expect(ticker.isUsed).to.be.true;
 			let blackHoleAddress = await minerContract.blackholeAddress();
@@ -231,6 +236,38 @@ describe("Miner contract init and test", () => {
 			let storeUsdtAddress = await minerContract.storeUsdtAddress();
 			let balanceOfUsdtClaim = await usdtToken.balanceOf(storeUsdtAddress);
 			expect(balanceOfUsdtClaim).to.be.equal(minerUsdtAmount);
+
+			// let minerIndex = await minerContract.minerIndex();
+			let expectMinerIndex = 1;
+			// expect(minerIndex).to.be.equal(expectMinerIndex);
+			let miner = await minerContract.userMinerMap(user.address, expectMinerIndex);
+			// console.log("miner is:",miner);
+			expect(miner.user).to.be.equal(user.address);
+			expect(miner.tickerIndex).to.be.equal(expectMinerIndex);
+			expect(miner.level).to.be.equal(minerLevel);
+			expect(miner.multiple).to.be.equal(multiple);
+			//calculate the profit
+			expect(miner.profitAmount).to.be.equal(minerProfitAmount);
+			expect(miner.payAmount).to.be.equal(minerReaAmount);
+			expect(miner.usdtAmount).to.be.equal(minerUsdtAmount);
+			expect(miner.profitToken).to.be.equal(profitToken);
+			expect(miner.claimRewardAmount).to.be.equal(0);
+			expect(miner.isExit).to.be.equal(false);
+
+
+			let pledgeMinerEvent = pledgeReceipt.events?.at(pledgeReceipt.events?.length - 1);
+			console.log("pledgeMinerEvent is:",pledgeMinerEvent);
+			expect(pledgeMinerEvent?.event).to.be.equal("PledgeMiner");
+
+
+			expect(pledgeMinerEvent?.args?.user).to.be.equal(user.address);
+			expect(pledgeMinerEvent?.args?.tickerIndex).to.be.equal(expectMinerIndex);
+			expect(pledgeMinerEvent?.args?.level).to.be.equal(minerLevel);
+			expect(pledgeMinerEvent?.args?.multiple).to.be.equal(multiple);
+			expect(pledgeMinerEvent?.args?.profitAmount).to.be.equal(minerProfitAmount);
+			expect(pledgeMinerEvent?.args?.payAmount).to.be.equal(minerReaAmount);
+			expect(pledgeMinerEvent?.args?.usdtAmount).to.be.equal(minerUsdtAmount);
+			expect(pledgeMinerEvent?.args?.profitToken).to.be.equal(profitToken);
 		});
 
 
