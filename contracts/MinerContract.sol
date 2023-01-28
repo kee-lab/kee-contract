@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
+import "hardhat/console.sol";
 
 contract MinerContract is OwnableUpgradeable {
     IERC20 public reaToken; // is REA token to buy the ticker
@@ -21,6 +22,8 @@ contract MinerContract is OwnableUpgradeable {
     address public claimAccountAddress;
     //store the usdt token
     address public storeUsdtAddress;
+    // the profit product account
+    address public profitProductAccount;
     mapping(address => mapping(uint256 => Miner)) public userMinerMap;
 
     // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
@@ -44,7 +47,8 @@ contract MinerContract is OwnableUpgradeable {
         uint256 _teamRewardPercent,
         address _claimAccountAddress,
         address _tickerContractAddress,
-        address _storeUsdtAddress
+        address _storeUsdtAddress,
+        address _profitProductAccount
     ) public initializer {
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
@@ -64,37 +68,41 @@ contract MinerContract is OwnableUpgradeable {
         claimAccountAddress = _claimAccountAddress;
         tickerContract = TickerContract(_tickerContractAddress);
         storeUsdtAddress = _storeUsdtAddress;
+        profitProductAccount = _profitProductAccount;
     }
 
 
-    function claimProfit(address userAddress,uint _minerIndex)public onlyManager{
+    function claimProfit(address userAddress,uint tickerIndex,uint claimAmount)public onlyManager{
         
-        Miner storage miner = userMinerMap[userAddress][_minerIndex];
+        Miner storage miner = userMinerMap[userAddress][tickerIndex];
         // check the ticker is exist
         require(miner.user == userAddress, "the user is not the buyer");
-        //TODO check the left money to less than the profitAmount
+        // check the left money to less than the profitAmount
         uint claimRewardAmount = miner.claimRewardAmount;
         uint profitAmount = miner.profitAmount; // 挖矿奖励金额。即为质押金额*矿机的倍数
-        require(claimRewardAmount+profitAmount<=profitAmount,"claim amount too high!");
+        claimRewardAmount += claimAmount;
+        require(claimRewardAmount<=profitAmount,"claim amount too high");
 
         //receive the fee
         uint minerLevel = miner.level;
-        uint drawFee = levelFeeMapping[minerLevel]*reaToken.decimals();
+        uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
+
+        console.log("contract drawFee is:",drawFee);
+
         reaToken.transferFrom(userAddress, claimAccountAddress, drawFee);
 
-        if (claimRewardAmount+profitAmount == profitAmount){
+        if (claimRewardAmount == profitAmount){
             //TODO: 退出该矿机。
             miner.isExit = true;
         }
         // TODO:增加矿机的转账金额并提现给用户。发送提现事件
-        claimRewardAmount += profitAmount;
+        
         IERC20 profileToken = IERC20(miner.profitToken);
         // transfer profit to user
-        profileToken.transferFrom(address(this),userAddress, profitAmount);
+        profileToken.transferFrom(profitProductAccount,userAddress, claimAmount);
         
         // emit the ClaimPorfit event
-            miner.isExit = true;
-        emit ClaimProfit(userAddress,_minerIndex,minerLevel,miner.multiple,profitAmount,drawFee,miner.profitToken);
+        emit ClaimProfit(userAddress,tickerIndex,minerLevel,miner.multiple,claimAmount,drawFee,miner.profitToken);
     }
 
     event ClaimProfit(
@@ -231,5 +239,9 @@ contract MinerContract is OwnableUpgradeable {
 
     function setStoreUsdtAddress(address _storeUsdtAddress) public onlyManager {
         storeUsdtAddress = _storeUsdtAddress;
+    }
+
+    function setProfitProductAccount(address _profitProductAccount) public onlyManager {
+        profitProductAccount = _profitProductAccount;
     }
 }

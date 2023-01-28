@@ -26,7 +26,7 @@ describe("Miner contract init and test", () => {
 		waffle.provider
 	);
 
-	async function v2Fixture([wallet, user, tickerRewardAccount, claimAccount, ecologyAccount, teamRewardAccount,storeUsdtAccount]: Wallet[], provider: MockProvider) {
+	async function v2Fixture([wallet, user, tickerRewardAccount, claimAccount, ecologyAccount, teamRewardAccount,storeUsdtAccount,profitProductAccount]: Wallet[], provider: MockProvider) {
 		const ReaToken = await ethers.getContractFactory("ReaToken");
 		const reaToken = await ReaToken.deploy();
 		await reaToken.initialize("REA token", "REA");
@@ -70,7 +70,9 @@ describe("Miner contract init and test", () => {
 		const minerContract = await MinerContract.deploy();
 
 
-		await minerContract.initialize(reaToken.address, usdtToken.address, blackHoleAddress, 10, ecologyAccount.address, 30, teamRewardAccount.address, 60, claimAccount.address,tickerContract.address,storeUsdtAccount.address);
+		await minerContract.initialize(reaToken.address, usdtToken.address, blackHoleAddress, 10, 
+			ecologyAccount.address, 30, teamRewardAccount.address, 60, claimAccount.address,tickerContract.address,
+			storeUsdtAccount.address,profitProductAccount.address);
 
 		return {
 			factoryV2,
@@ -79,6 +81,7 @@ describe("Miner contract init and test", () => {
 			claimAccount,
 			ecologyAccount,
 			teamRewardAccount,
+			profitProductAccount,
 			usdtToken,
 			fil,
 			oracle,
@@ -96,6 +99,7 @@ describe("Miner contract init and test", () => {
 		const buyTickerUsdtAmount = expandTo18Decimals(10);
 		const minerReaUsdtAmount = expandTo18Decimals(80);
 		const minerUsdtAmount = expandTo18Decimals(120);
+		const claimAmount = expandTo18Decimals(5);
 		// const swapAmount = expandTo18Decimals(1);
 		// const expectedOutputAmount = BigNumber.from("1662497915624478906");
 
@@ -107,6 +111,7 @@ describe("Miner contract init and test", () => {
 				claimAccount,
 				ecologyAccount,
 				teamRewardAccount,
+				profitProductAccount,
 				usdtToken,
 				fil,
 				oracle,
@@ -256,7 +261,7 @@ describe("Miner contract init and test", () => {
 
 
 			let pledgeMinerEvent = pledgeReceipt.events?.at(pledgeReceipt.events?.length - 1);
-			console.log("pledgeMinerEvent is:",pledgeMinerEvent);
+			// console.log("pledgeMinerEvent is:",pledgeMinerEvent);
 			expect(pledgeMinerEvent?.event).to.be.equal("PledgeMiner");
 
 
@@ -268,9 +273,45 @@ describe("Miner contract init and test", () => {
 			expect(pledgeMinerEvent?.args?.payAmount).to.be.equal(minerReaAmount);
 			expect(pledgeMinerEvent?.args?.usdtAmount).to.be.equal(minerUsdtAmount);
 			expect(pledgeMinerEvent?.args?.profitToken).to.be.equal(profitToken);
+
+
+			// start claimProfit
+
+			await expect(minerContract.connect(user)
+				.claimProfit(claimAccount.address,tickerIndex,claimAmount, { from: user.address }))
+				.to.be.revertedWith("the user is not the buyer");
+
+			await expect(minerContract.connect(user)
+				.claimProfit(user.address,tickerIndex,expandTo18Decimals(11), { from: user.address }))
+				.to.be.revertedWith("claim amount too high");
+
+			await expect(minerContract.connect(claimAccount)
+				.claimProfit(claimAccount.address,tickerIndex,claimAmount, { from: claimAccount.address }))
+				.to.be.revertedWith("Not manager");
+			console.log("claimAmount is:",claimAmount);
+
+			await expect(minerContract.connect(user)
+				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.to.be.revertedWith("ERC20: insufficient allowance");
+			let reaBalanceOfUser = await reaToken.balanceOf(user.address);
+			console.log("reaBalanceOfUser is:",reaBalanceOfUser);
+			let drawFee = (await minerContract.levelFeeMapping(minerLevel)).mul((BigNumber.from(10)).pow(await reaToken.decimals()));
+			await reaToken.mint(user.address,drawFee);
+			await expect(minerContract.connect(user)
+				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.to.be.revertedWith("ERC20: insufficient allowance");
+
+			console.log("drawFee is:",drawFee);
+			await reaToken.connect(user).approve(minerContract.address,drawFee,{from: user.address});
+			await expect(minerContract.connect(user)
+				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.to.be.revertedWith("ERC20: insufficient allowance");
+			
+			
+			await fil.mint(profitProductAccount.address,claimAmount);
+			await fil.connect(profitProductAccount).approve(minerContract.address,claimAmount,{from:profitProductAccount.address});
+			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,{from: user.address});
 		});
-
-
 	});
 
 });
