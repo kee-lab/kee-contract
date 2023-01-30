@@ -274,43 +274,91 @@ describe("Miner contract init and test", () => {
 			expect(pledgeMinerEvent?.args?.usdtAmount).to.be.equal(minerUsdtAmount);
 			expect(pledgeMinerEvent?.args?.profitToken).to.be.equal(profitToken);
 
-
+			let drawFeeOfUsdt = (await minerContract.levelFeeMapping(minerLevel)).mul((BigNumber.from(10)).pow(await usdtToken.decimals()));
+			drawFeeOfUsdt = drawFeeOfUsdt.div(humanTokenPrice);
 			// start claimProfit
-
 			await expect(minerContract.connect(user)
-				.claimProfit(claimAccount.address,tickerIndex,claimAmount, { from: user.address }))
+				.claimProfit(claimAccount.address,tickerIndex,claimAmount,drawFeeOfUsdt, { from: user.address }))
 				.to.be.revertedWith("the user is not the buyer");
 
 			await expect(minerContract.connect(user)
-				.claimProfit(user.address,tickerIndex,expandTo18Decimals(11), { from: user.address }))
+				.claimProfit(user.address,tickerIndex,expandTo18Decimals(11),drawFeeOfUsdt, { from: user.address }))
 				.to.be.revertedWith("claim amount too high");
 
 			await expect(minerContract.connect(claimAccount)
-				.claimProfit(claimAccount.address,tickerIndex,claimAmount, { from: claimAccount.address }))
+				.claimProfit(claimAccount.address,tickerIndex,claimAmount,drawFeeOfUsdt, { from: claimAccount.address }))
 				.to.be.revertedWith("Not manager");
 			console.log("claimAmount is:",claimAmount);
 
 			await expect(minerContract.connect(user)
-				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.claimProfit(user.address,tickerIndex,claimAmount,drawFeeOfUsdt, { from: user.address }))
 				.to.be.revertedWith("ERC20: insufficient allowance");
 			let reaBalanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("reaBalanceOfUser is:",reaBalanceOfUser);
-			let drawFee = (await minerContract.levelFeeMapping(minerLevel)).mul((BigNumber.from(10)).pow(await reaToken.decimals()));
-			await reaToken.mint(user.address,drawFee);
+
+
+
+
+
+
+			// TODO 重新计算提币费用。需要使用oracle的rea对应U的价格进行计算。
+			
+			console.log("drawFeeOfUsdt is:",drawFeeOfUsdt);
+			await reaToken.mint(user.address,drawFeeOfUsdt);
 			await expect(minerContract.connect(user)
-				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.claimProfit(user.address,tickerIndex,claimAmount,drawFeeOfUsdt, { from: user.address }))
 				.to.be.revertedWith("ERC20: insufficient allowance");
 
-			console.log("drawFee is:",drawFee);
-			await reaToken.connect(user).approve(minerContract.address,drawFee,{from: user.address});
+			console.log("drawFee is:",drawFeeOfUsdt);
+			await reaToken.connect(user).approve(minerContract.address,drawFeeOfUsdt,{from: user.address});
 			await expect(minerContract.connect(user)
-				.claimProfit(user.address,tickerIndex,claimAmount, { from: user.address }))
+				.claimProfit(user.address,tickerIndex,claimAmount,drawFeeOfUsdt, { from: user.address }))
 				.to.be.revertedWith("ERC20: insufficient allowance");
 			
 			
 			await fil.mint(profitProductAccount.address,claimAmount);
 			await fil.connect(profitProductAccount).approve(minerContract.address,claimAmount,{from:profitProductAccount.address});
-			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,{from: user.address});
+			let claimTx = await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,drawFeeOfUsdt,{from: user.address});
+			
+
+			miner = await minerContract.userMinerMap(user.address, expectMinerIndex);
+			// console.log("miner is:",miner);
+			expect(miner.claimRewardAmount).to.be.equal(claimAmount);
+
+			expect(await reaToken.balanceOf(user.address)).to.be.equal(0);
+			expect(await reaToken.balanceOf(claimAccountAddress)).to.be.equal(balanceOfClaimAccountAddress.add(drawFeeOfUsdt));
+			expect(miner.isExit).to.be.false;
+			expect(await fil.balanceOf(user.address)).to.be.equal(claimAmount);
+			expect(await fil.balanceOf(profitProductAccount.address)).to.be.equal(0);
+
+			let claimReceipt = await claimTx.wait();
+
+			let claimEvent = claimReceipt.events?.at(claimReceipt.events?.length - 1);
+			// console.log("claimEvent is:",claimEvent);
+			expect(claimEvent?.event).to.be.equal("ClaimProfit");
+
+
+			expect(claimEvent?.args?.user).to.be.equal(user.address);
+			expect(claimEvent?.args?.minerIndex).to.be.equal(expectMinerIndex);
+			expect(claimEvent?.args?.level).to.be.equal(minerLevel);
+			expect(claimEvent?.args?.multiple).to.be.equal(multiple);
+			expect(claimEvent?.args?.claimAmount).to.be.equal(claimAmount);
+			expect(claimEvent?.args?.feeAmount).to.be.equal(drawFeeOfUsdt);
+			expect(claimEvent?.args?.profitToken).to.be.equal(profitToken);
+
+			// TODO test  miner.isExit = true;
+			let leftMinerProfitAmount = minerProfitAmount.sub(claimAmount);
+			console.log("minerProfitAmount.sub(claimAmount) is:",minerProfitAmount.sub(claimAmount));
+			await fil.mint(profitProductAccount.address,leftMinerProfitAmount);
+			await fil.connect(profitProductAccount).approve(minerContract.address,leftMinerProfitAmount,{from:profitProductAccount.address});
+			await reaToken.mint(user.address,drawFeeOfUsdt);
+			await reaToken.connect(user).approve(minerContract.address,drawFeeOfUsdt,{from: user.address});
+
+			claimTx = await minerContract.connect(user).claimProfit(user.address,tickerIndex,leftMinerProfitAmount,drawFeeOfUsdt,{from: user.address});
+
+			miner = await minerContract.userMinerMap(user.address, expectMinerIndex);
+			console.log("miner is:",miner);
+			expect(miner.isExit).to.be.true;
 		});
 	});
 

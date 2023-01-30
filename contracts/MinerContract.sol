@@ -72,7 +72,7 @@ contract MinerContract is OwnableUpgradeable {
     }
 
 
-    function claimProfit(address userAddress,uint tickerIndex,uint claimAmount)public onlyManager{
+    function claimProfit(address userAddress,uint tickerIndex,uint claimAmount,uint claimFeeAmount)public onlyManager{
         
         Miner storage miner = userMinerMap[userAddress][tickerIndex];
         // check the ticker is exist
@@ -81,18 +81,19 @@ contract MinerContract is OwnableUpgradeable {
         uint claimRewardAmount = miner.claimRewardAmount;
         uint profitAmount = miner.profitAmount; // 挖矿奖励金额。即为质押金额*矿机的倍数
         claimRewardAmount += claimAmount;
+        miner.claimRewardAmount = claimRewardAmount;
         require(claimRewardAmount<=profitAmount,"claim amount too high");
 
         //receive the fee
         uint minerLevel = miner.level;
-        uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
+        // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
 
-        console.log("contract drawFee is:",drawFee);
+        console.log("contract drawFee is:",claimFeeAmount);
 
-        reaToken.transferFrom(userAddress, claimAccountAddress, drawFee);
+        reaToken.transferFrom(userAddress, claimAccountAddress, claimFeeAmount);
 
         if (claimRewardAmount == profitAmount){
-            //TODO: 退出该矿机。
+            // this miner exit
             miner.isExit = true;
         }
         // TODO:增加矿机的转账金额并提现给用户。发送提现事件
@@ -102,7 +103,7 @@ contract MinerContract is OwnableUpgradeable {
         profileToken.transferFrom(profitProductAccount,userAddress, claimAmount);
         
         // emit the ClaimPorfit event
-        emit ClaimProfit(userAddress,tickerIndex,minerLevel,miner.multiple,claimAmount,drawFee,miner.profitToken);
+        emit ClaimProfit(userAddress,tickerIndex,minerLevel,miner.multiple,claimAmount,claimFeeAmount,miner.profitToken);
     }
 
     event ClaimProfit(
@@ -110,9 +111,9 @@ contract MinerContract is OwnableUpgradeable {
         uint256 minerIndex,
         uint256 level,
         uint256 multiple,
-        uint256 profitAmount,
+        uint256 claimAmount,
         uint256 feeAmount,
-        address profileToken
+        address profitToken
     );
 
     
