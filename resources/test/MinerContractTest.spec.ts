@@ -92,7 +92,7 @@ describe("Miner contract init and test", () => {
 		};
 	}
 
-	describe.only("miner test", () => {
+	describe("miner test", () => {
 		const token0Amount = expandTo18Decimals(5);
 		const token1Amount = expandTo18Decimals(10);
 		const minerProfitAmount = expandTo18Decimals(10);

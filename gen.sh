@@ -1,0 +1,1 @@
+solc --bin --abi --include-path node_modules/ --base-path . -o res ./contracts/TickerContract.sol

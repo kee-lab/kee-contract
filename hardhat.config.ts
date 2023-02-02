@@ -11,7 +11,7 @@ import "solidity-coverage";
 import "@openzeppelin/hardhat-upgrades";
 
 // tasks
-import "./src/tasks/accounts";
+import "./resources/tasks/accounts";
 
 dotenv.config();
 
@@ -22,10 +22,10 @@ const config: HardhatUserConfig = {
       blockGasLimit: 90000000,
       // allowUnlimitedContractSize: true,
     },
-    bsctestnet: {
-      url: "https://dz568y85cjz81.cloudfront.net",
+    niletestnet: {
+      url: "https://api.nileex.io",
       chainId: 97,
-      accounts: ["c2713624c5aaeb629e5fdaf3dc7f57fe69eeae8397cb8d581db8db00e1909c15"],
+      accounts: ["TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy"],
       // gasPrice:9000000000
       timeout: 900000
     },
@@ -73,11 +73,11 @@ const config: HardhatUserConfig = {
     currency: "USD",
   },
   typechain: {
-    outDir: "./src/types",
+    outDir: "./resources/types",
     target: "ethers-v5",
   },
   paths: {
-    tests: "./src/test",
+    tests: "./resources/test",
   },
   etherscan: {
     apiKey: {
