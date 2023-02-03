@@ -25,7 +25,7 @@ async function main() {
     let usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
 
     const input = fs.readFileSync('./res/test/SmartERC20.abi');
-    console.log("input is: " + input);
+    console.log("input is: " + input.toString());
 
 
     const fullNode = 'https://nile.trongrid.io';
