@@ -35,9 +35,28 @@ async function main() {
     const tronWeb = new TronWeb(fullNode,solidityNode,eventServer,privateKey);
     let instance = await tronWeb.contract().at("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj");
     console.log("instance: ",instance.address);
-    instance.loadAbi(input.toString());
-    let res = await instance.balanceOf("TH5ydFhBnLV4ZHF2bgBVaTBfX8LY17kj9W").call({_isConstant:true})
-    console.log("res is"+res);
+    instance.loadAbi(JSON.parse(input.toString()));
+    let symbol = await instance.symbol().call({_isConstant:true})
+    console.log("symbol is:"+symbol);
+
+
+    // start deploy Rea token
+    let abi = 'some abi for contract';
+    let code = 'bytecode';
+    async function deploy_contract(){
+        let contract_instance = await tronWeb.contract().new({
+        abi:JSON.parse(abi),
+        bytecode:code,
+        feeLimit:1_00_000_000,
+        callValue:0,
+        userFeePercentage:1,
+        originEnergyLimit:10_000_000  
+        //parameters:[para1,2,3,...]
+    });
+    console.log(contract_instance.address);
+    }
+
+    deploy_contract();// Execute the function
     // const commonTokenFactory = await ethers.getContractFactory("CommonToken");
     // let usdt = await commonTokenFactory.attach(usdtTokenAddress);
     // console.log("usdt address:", await usdt.balanceOf(wallet));
