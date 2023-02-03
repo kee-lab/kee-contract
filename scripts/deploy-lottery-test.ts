@@ -6,6 +6,17 @@ const { BN } = require("@openzeppelin/test-helpers");
 const TronWeb = require('tronweb');
 const fs = require('fs');
 
+const fullNode = 'https://nile.trongrid.io';
+const solidityNode = 'https://nile.trongrid.io';
+const eventServer = 'https://nile.trongrid.io';
+const privateKey = 'd6c12ee57f6a0bbaeb823a4c34e61fe2d2da0557a392392b979ab46c97c2cc5f';
+
+const productReaTokenAddress = "TH5ydFhBnLV4ZHF2bgBVaTBfX8LY17kj9W";
+const productUsdtTokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
+const storeREAFeeWallet = "TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f";
+const claimWallet = "TYqFGVcr8He5f97UTa6EtM698FSMxPYFad";
+
 async function withDecimals(amount: number) {
     return new BN(amount).mul(new BN(10).pow(new BN(18))).toString();
 }
@@ -20,65 +31,51 @@ async function main() {
     let signers = await ethers.getSigners();
     let wallet = signers[0];
     console.log("wallet:", wallet.address);
-    let productReaTokenAddress = "TH5ydFhBnLV4ZHF2bgBVaTBfX8LY17kj9W";
-    let productUsdtTokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-    let usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
-
-    const input = fs.readFileSync('./res/test/SmartERC20.abi');
-    console.log("input is: " + input.toString());
 
 
-    const fullNode = 'https://nile.trongrid.io';
-    const solidityNode = 'https://nile.trongrid.io';
-    const eventServer = 'https://nile.trongrid.io';
-    const privateKey = 'd6c12ee57f6a0bbaeb823a4c34e61fe2d2da0557a392392b979ab46c97c2cc5f';
-    const tronWeb = new TronWeb(fullNode,solidityNode,eventServer,privateKey);
-    let instance = await tronWeb.contract().at("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj");
-    console.log("instance: ",instance.address);
-    instance.loadAbi(JSON.parse(input.toString()));
-    let symbol = await instance.symbol().call({_isConstant:true})
-    console.log("symbol is:"+symbol);
+    let input = fs.readFileSync('./res/test/SmartERC20.abi');
+    // console.log("input is: " + input.toString());
+
+
+
+    const tronWeb = new TronWeb(fullNode, solidityNode, eventServer, privateKey);
+    let usdtInstance = await tronWeb.contract().at("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj");
+    console.log("instance: ", usdtInstance.address);
+    usdtInstance.loadAbi(JSON.parse(input.toString()));
+    let symbol = await usdtInstance.symbol().call({ _isConstant: true })
+    console.log("symbol is:" + symbol);
+
+    let REAInstance = await tronWeb.contract().at("THGr2QTj5yChq3kvpmMADogKvvY9XxkXNR");
+    console.log("instance: ", REAInstance.address);
+    REAInstance.loadAbi(JSON.parse(input.toString()));
+    symbol = await REAInstance.symbol().call({ _isConstant: true })
+    console.log("symbol is:" + symbol);
+
+
 
 
     // start deploy Rea token
-    let abi = 'some abi for contract';
-    let code = 'bytecode';
-    async function deploy_contract(){
+    let tickerAbiFile = fs.readFileSync('./res/TickerContract.abi');
+    let tickerBinFile = fs.readFileSync('./res/TickerContract.bin');
+    let tickerAbi = tickerAbiFile.toString();
+    let tickerCode = tickerBinFile.toString();
+    console.log("tickerAbi is:",tickerAbi);
+    async function deploy_contract() {
         let contract_instance = await tronWeb.contract().new({
-        abi:JSON.parse(abi),
-        bytecode:code,
-        feeLimit:1_00_000_000,
-        callValue:0,
-        userFeePercentage:1,
-        originEnergyLimit:10_000_000  
-        //parameters:[para1,2,3,...]
-    });
-    console.log(contract_instance.address);
+            abi: JSON.parse(tickerAbi),
+            bytecode: tickerCode,
+            feeLimit: 10_00_000_000,
+            callValue: 0,
+            userFeePercentage: 1,
+            originEnergyLimit: 10_000_000,
+            parameters:[REAInstance.address,storeREAFeeWallet,claimWallet,]
+        });
+        console.log(contract_instance.address);
     }
 
-    deploy_contract();// Execute the function
-    // const commonTokenFactory = await ethers.getContractFactory("CommonToken");
-    // let usdt = await commonTokenFactory.attach(usdtTokenAddress);
-    // console.log("usdt address:", await usdt.balanceOf(wallet));
+    await deploy_contract();// Execute the function
 
-    // const ReaToken = await ethers.getContractFactory("ReaToken");
-    // const reaToken = await ReaToken.deploy();
-    // await reaToken.initialize("REA token","REA");
-    // console.log("REA token address:", reaToken.address);
 
-    // // deploy tokenB
-    // const TokenBFactory = await ethers.getContractFactory("BananaToken");
-    // const tokenB = await TokenBFactory.deploy();
-    // await tokenB.deployed();
-    // console.log("Banana tokenB address:", tokenB.address);
-
-    // let tx = await tokenB.initialize("Banana", "BANANA", { gasLimit: "6000000" });
-    // await tx.wait();
-    // console.log("Banana initialize", tokenB.address);
-
-    // tx = await tokenB.mint(wallet.address, expandTo18Decimals(1), { gasLimit: "6000000" });
-    // await tx.wait();
-    // console.log("Banana mint address:", tokenB.address);
 
     // const TokenManagerFactory = await ethers.getContractFactory("TokenManager");
     // const tokenManager = await upgrades.deployProxy(TokenManagerFactory, [tokenB.address, usdt.address], { initializer: "initialize" });
