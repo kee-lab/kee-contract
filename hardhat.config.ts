@@ -23,9 +23,9 @@ const config: HardhatUserConfig = {
       // allowUnlimitedContractSize: true,
     },
     niletestnet: {
-      url: "https://api.nileex.io",
-      chainId: 97,
-      accounts: ["TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy"],
+      url: "https://nile.trongrid.io",
+      // chainId: 97,
+      accounts: ["d6c12ee57f6a0bbaeb823a4c34e61fe2d2da0557a392392b979ab46c97c2cc5f"],
       // gasPrice:9000000000
       timeout: 900000
     },
