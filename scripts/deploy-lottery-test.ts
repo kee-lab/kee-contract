@@ -4,6 +4,7 @@ const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { BN } = require("@openzeppelin/test-helpers");
 const TronWeb = require('tronweb');
+const fs = require('fs');
 
 async function withDecimals(amount: number) {
     return new BN(amount).mul(new BN(10).pow(new BN(18))).toString();
@@ -23,6 +24,10 @@ async function main() {
     let productUsdtTokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     let usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
 
+    const input = fs.readFileSync('./res/test/SmartERC20.abi');
+    console.log("input is: " + input);
+
+
     const fullNode = 'https://nile.trongrid.io';
     const solidityNode = 'https://nile.trongrid.io';
     const eventServer = 'https://nile.trongrid.io';
@@ -30,7 +35,7 @@ async function main() {
     const tronWeb = new TronWeb(fullNode,solidityNode,eventServer,privateKey);
     let instance = await tronWeb.contract().at("TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj");
     console.log("instance: ",instance.address);
-    instance.loadAbi([{"inputs":[{"name":"name_","type":"string"},{"name":"symbol_","type":"string"}],"stateMutability":"Nonpayable","type":"Constructor"},{"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"name":"value","type":"uint256"}],"name":"Approval","type":"Event"},{"inputs":[{"name":"userAddress","type":"address"},{"name":"relayerAddress","type":"address"},{"name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"Event"},{"inputs":[{"indexed":true,"name":"previousOwner","type":"address"},{"indexed":true,"name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"Event"},{"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"name":"value","type":"uint256"}],"name":"Transfer","type":"Event"},{"outputs":[{"type":"string"}],"name":"ERC712_VERSION","stateMutability":"View","type":"Function"},{"outputs":[{"type":"uint256"}],"inputs":[{"name":"owner","type":"address"},{"name":"spender","type":"address"}],"name":"allowance","stateMutability":"View","type":"Function"},{"outputs":[{"type":"bool"}],"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","stateMutability":"Nonpayable","type":"Function"},{"outputs":[{"type":"uint256"}],"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","stateMutability":"View","type":"Function"},{"outputs":[{"type":"uint8"}],"name":"decimals","stateMutability":"View","type":"Function"},{"outputs":[{"type":"bool"}],"inputs":[{"name":"spender","type":"address"},{"name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","stateMutability":"Nonpayable","type":"Function"},{"outputs":[{"type":"bytes"}],"inputs":[{"name":"userAddress","type":"address"},{"name":"functionSignature","type":"bytes"},{"name":"sigR","type":"bytes32"},{"name":"sigS","type":"bytes32"},{"name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","stateMutability":"Payable","type":"Function"},{"outputs":[{"type":"uint256"}],"name":"getChainId","stateMutability":"Pure","type":"Function"},{"outputs":[{"type":"bytes32"}],"name":"getDomainSeperator","stateMutability":"View","type":"Function"},{"outputs":[{"name":"nonce","type":"uint256"}],"inputs":[{"name":"user","type":"address"}],"name":"getNonce","stateMutability":"View","type":"Function"},{"outputs":[{"type":"bool"}],"inputs":[{"name":"spender","type":"address"},{"name":"addedValue","type":"uint256"}],"name":"increaseAllowance","stateMutability":"Nonpayable","type":"Function"},{"inputs":[{"name":"amount","type":"uint256"}],"name":"mint","stateMutability":"Nonpayable","type":"Function"},{"outputs":[{"type":"string"}],"name":"name","stateMutability":"View","type":"Function"},{"outputs":[{"type":"address"}],"name":"owner","stateMutability":"View","type":"Function"},{"name":"renounceOwnership","stateMutability":"Nonpayable","type":"Function"},{"outputs":[{"type":"string"}],"name":"symbol","stateMutability":"View","type":"Function"},{"outputs":[{"type":"uint256"}],"name":"totalSupply","stateMutability":"View","type":"Function"},{"outputs":[{"type":"bool"}],"inputs":[{"name":"recipient","type":"address"},{"name":"amount","type":"uint256"}],"name":"transfer","stateMutability":"Nonpayable","type":"Function"},{"outputs":[{"type":"bool"}],"inputs":[{"name":"sender","type":"address"},{"name":"recipient","type":"address"},{"name":"amount","type":"uint256"}],"name":"transferFrom","stateMutability":"Nonpayable","type":"Function"},{"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","stateMutability":"Nonpayable","type":"Function"}]);
+    instance.loadAbi(input.toString());
     let res = await instance.balanceOf("TH5ydFhBnLV4ZHF2bgBVaTBfX8LY17kj9W").call({_isConstant:true})
     console.log("res is"+res);
     // const commonTokenFactory = await ethers.getContractFactory("CommonToken");
