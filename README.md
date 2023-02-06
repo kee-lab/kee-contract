@@ -11,3 +11,9 @@ grpc fullnode API: grpc.nile.trongrid.io:50051
 grpc solidity API: grpc.nile.trongrid.io:50061
 json-rpc API: https://nile.trongrid.io/jsonrpc
 数据库状态备份：http://47.90.243.177
+
+
+walletAddress:TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy
+TickerContractAddress:41d675eb75c6fd916fe96b72c828875d7e6f16d0e6
+sunfactoryaddress:TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG 41c6c0b8a324d3269e88eee50a4f35c248ba2424fb
+pairAddress:41ad36bc41c1ab88f8f919ec943b79921a460a9768

@@ -38,7 +38,7 @@ contract ExampleOracleSimple is IOracle, OwnableUpgradeable {
 
     function initialize(address /* factory */, address tokenA, address usdt,ISunswapV2Pair _pair,uint224 _tokenAUsdtPrice)public initializer{
         __Ownable_init();
-        (token0,) = SunswapV2Library.sortTokens(tokenA, usdt);
+        (token0,token1) = SunswapV2Library.sortTokens(tokenA, usdt);
 
         // ISunswapV2Pair _pair = IUniswapV2Pair(SunswapV2Library.pairFor(factory, tokenA, usdt));
         pair = _pair;

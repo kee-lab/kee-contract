@@ -119,6 +119,9 @@ describe("Oracle initialize and test", () => {
 			let humanTokenPrice = tokenPrice.div(BigNumber.from(2).pow(112));
 			console.log("humanTokenPrice is:{}", humanTokenPrice);
 			await oracle.update();
+			console.log("oracle.token0 is:",await oracle.token0());
+			console.log("oracle.token1 is:",await oracle.token1());
+			console.log("reaToken.address is:",reaToken.address);
 			let consult = await oracle.consult(reaToken.address,expandTo8Decimals(2));
 			console.log("consult is:{}", consult);
 		});

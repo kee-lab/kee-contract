@@ -10,7 +10,7 @@ const fullNode = 'https://nile.trongrid.io';
 const solidityNode = 'https://nile.trongrid.io';
 const eventServer = 'https://nile.trongrid.io';
 const privateKey = 'd6c12ee57f6a0bbaeb823a4c34e61fe2d2da0557a392392b979ab46c97c2cc5f';
-
+const walletAddress = "TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy";
 const productReaTokenAddress = "TH5ydFhBnLV4ZHF2bgBVaTBfX8LY17kj9W";
 const productUsdtTokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
@@ -26,11 +26,11 @@ function expandTo18Decimals(n: number) {
 }
 
 async function main() {
-    console.log("---- deploy start");
+    console.log("---- deploy oracle start");
 
     let signers = await ethers.getSigners();
     let wallet = signers[0];
-    console.log("wallet:", wallet.address);
+    console.log("wallet.address is:", wallet.address);
 
 
     let input = fs.readFileSync('./res/test/SmartERC20.abi');
@@ -55,36 +55,39 @@ async function main() {
 
 
     // start deploy Rea token
-    let tickerAbiFile = fs.readFileSync('./res/TickerContract.abi');
-    let tickerBinFile = fs.readFileSync('./res/TickerContract.bin');
-    let tickerAbi = tickerAbiFile.toString();
-    let tickerCode = tickerBinFile.toString();
-    console.log("tickerAbi is:", tickerAbi);
-    async function deploy_ticker_contract() {
-        let contract_instance = await tronWeb.contract().new({
-            abi: JSON.parse(tickerAbi),
-            bytecode: tickerCode,
-            feeLimit: 1_00_000_000,
-            callValue: 0,
-            userFeePercentage: 1,
-            originEnergyLimit: 10_000_000,
-            parameters:[]
-        });
-        console.log("contract_instance address is:",contract_instance.address);
-        let result = await contract_instance.initialize(REAInstance.address, storeREAFeeWallet, claimWallet,).send({
-            feeLimit: 1_000_000,
-            callValue: 0
-        });
-        console.log("result is:", result);
-    }
+    let factoryAbiFile = fs.readFileSync('./res/sunswap/factory/SunswapV2Factory.abi');
+    let factoryBinFile = fs.readFileSync('./res/sunswap/factory/SunswapV2Factory.bin');
+    let factoryAbi = factoryAbiFile.toString();
+    let factoryCode = factoryBinFile.toString();
+    // console.log("factoryCode is:", factoryCode);
+    // async function deploy_factory_contract() {
+    //     let contract_instance = await tronWeb.contract().new({
+    //         abi: JSON.parse(factoryAbi),
+    //         bytecode: factoryCode,
+    //         feeLimit: 4_000_000_000,
+    //         callValue: 0,
+    //         userFeePercentage: 1,
+    //         originEnergyLimit: 10_000_000,
+    //         parameters:[walletAddress,]
+    //     });
+    //     console.log("contract_instance address is:",contract_instance.address);
+    //     return contract_instance;
+    // }
+    // let contract_instance = await deploy_factory_contract();// Execute the function
     async function attach_ticker_contract() {
-        let contract_instance = await tronWeb.contract().at("TLQviAB2VkYzpuuZVo7yvXNtEggtCHnLmt");
-        let result = await contract_instance.payToken().call();
+        let contract_instance = await tronWeb.contract().at("TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG");
+        let result = await contract_instance.createPair(REAInstance.address, usdtInstance.address).send({
+            feeLimit: 4_000_000_000,
+            callValue: 0,
+            shouldPollResponse:true
+        });
         console.log("result is:", result);
     }
-    await attach_ticker_contract();// Execute the function
+    
+    await attach_ticker_contract();
 
 
+    
 
 
     // const TokenManagerFactory = await ethers.getContractFactory("TokenManager");
