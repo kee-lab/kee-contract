@@ -16,6 +16,8 @@ const productUsdtTokenAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const usdtTokenAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
 const storeREAFeeWallet = "TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f";
 const claimWallet = "TYqFGVcr8He5f97UTa6EtM698FSMxPYFad";
+const facotryAddress = "TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG";
+const pairAddress = "41ad36bc41c1ab88f8f919ec943b79921a460a9768"
 
 async function withDecimals(amount: number) {
     return new BN(amount).mul(new BN(10).pow(new BN(18))).toString();
@@ -129,13 +131,21 @@ async function main() {
     console.log("routerAbi is:", routerAbi);
     async function deploy_router_contract() {
         let contract_instance = await tronWeb.contract().new({
-            abi: JSON.parse(routerAbi),
-            bytecode: routerCode,
+            abi: JSON.parse(oracleAbi),
+            bytecode: oracleCode,
             feeLimit: 8_000_000_000,
             callValue: 0,
             userFeePercentage: 1,
             originEnergyLimit: 10_000_000,
-            parameters:["TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG",REAInstance.address]
+            parameters:[]
+        });
+
+        // factoryV2.address, reaToken.address, usdt.address, reaUsdtPairAddress, token0Amount
+        let tokenAUsdtPrice = expandTo18Decimals(5);
+        let result = await contract_instance.initialize(facotryAddress,REAInstance.address, usdtInstance.address,pairAddress,tokenAUsdtPrice).send({
+            feeLimit: 4_000_000_000,
+            callValue: 0,
+            shouldPollResponse:true
         });
         console.log("contract_instance address is:",contract_instance.address);
         return contract_instance;
@@ -143,11 +153,12 @@ async function main() {
     let contract_instance = await deploy_router_contract();// Execute the function
     async function attach_router_contract() {
         let contract_instance = await tronWeb.contract().at("41c42214b69367d3100d0d1f811265a3b5ba93a5aa");
-        // let result = await contract_instance.createPair(REAInstance.address, usdtInstance.address).send({
-        //     feeLimit: 4_000_000_000,
-        //     callValue: 0,
-        //     shouldPollResponse:true
-        // });
+        // factoryV2.address, reaToken.address, usdt.address, reaUsdtPairAddress, token0Amount
+        let result = await contract_instance.initialize(REAInstance.address, usdtInstance.address).send({
+            feeLimit: 4_000_000_000,
+            callValue: 0,
+            shouldPollResponse:true
+        });
         console.log("result is:", contract_instance.address);
         return contract_instance;
     }
