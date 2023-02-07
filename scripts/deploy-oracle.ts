@@ -118,6 +118,42 @@ async function main() {
     }
     let routerContract = await attach_router_contract();
     console.log("result is:", routerContract.address);
+
+
+    // deploy the oracle contract
+
+    let oracleAbiFile = fs.readFileSync('./res/sunswap/router/ExampleOracleSimple.abi');
+    let oracleBinFile = fs.readFileSync('./res/sunswap/router/ExampleOracleSimple.bin');
+    let oracleAbi = oracleAbiFile.toString();
+    let oracleCode = oracleBinFile.toString();
+    console.log("routerAbi is:", routerAbi);
+    async function deploy_router_contract() {
+        let contract_instance = await tronWeb.contract().new({
+            abi: JSON.parse(routerAbi),
+            bytecode: routerCode,
+            feeLimit: 8_000_000_000,
+            callValue: 0,
+            userFeePercentage: 1,
+            originEnergyLimit: 10_000_000,
+            parameters:["TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG",REAInstance.address]
+        });
+        console.log("contract_instance address is:",contract_instance.address);
+        return contract_instance;
+    }
+    let contract_instance = await deploy_router_contract();// Execute the function
+    async function attach_router_contract() {
+        let contract_instance = await tronWeb.contract().at("41c42214b69367d3100d0d1f811265a3b5ba93a5aa");
+        // let result = await contract_instance.createPair(REAInstance.address, usdtInstance.address).send({
+        //     feeLimit: 4_000_000_000,
+        //     callValue: 0,
+        //     shouldPollResponse:true
+        // });
+        console.log("result is:", contract_instance.address);
+        return contract_instance;
+    }
+    let routerContract = await attach_router_contract();
+    console.log("result is:", routerContract.address);
+
     console.log("---- deploy end");
 }
 
