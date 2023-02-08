@@ -105,7 +105,7 @@ describe("Ticker contract init and test", () => {
 			} = await loadFixture(
 				v2Fixture
 			);
-
+			let tickerIndex = 1;
 			await reaToken.mint(wallet.address,token0Amount);
 			let reaTokenDecimal = await reaToken.decimals();
 			console.log("reaTokenDecimal",reaTokenDecimal);
@@ -123,7 +123,7 @@ describe("Ticker contract init and test", () => {
 			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
 			console.log("payAmount is:{}", payAmount);
 			
-			await expect(tickerContract.connect(user).buyTicker(user.address,1,payAmount,3,fil.address,{from:user.address})).to.be.revertedWith("Not manager");
+			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex,1,payAmount,3,fil.address,{from:user.address})).to.be.revertedWith("Not manager");
 			await reaToken.mint(user.address,token0Amount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("balanceOfUser is:",balanceOfUser);
@@ -131,7 +131,7 @@ describe("Ticker contract init and test", () => {
 			await tickerContract.setManager(user.address,true);
 			let minerLevel = 1;
 			let multiple = 3;
-			let tx = await tickerContract.connect(user).buyTicker(user.address,minerLevel,payAmount,multiple,fil.address,{from:user.address});
+			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex,minerLevel,payAmount,multiple,fil.address,{from:user.address});
 			let receipt = await tx.wait();
 			console.log("token0Amount is:",token0Amount);
 			console.log("payAmount is:",payAmount);
@@ -147,8 +147,8 @@ describe("Ticker contract init and test", () => {
 			expect(userTicker.isUsed).to.be.equal(false);
 			expect(userTicker.multiple).to.be.equal(multiple);
 			expect(userTicker.profitToken).to.be.equal(fil.address);
-			let tickerIndex = await tickerContract.tickerIndex();
-			expect(tickerIndex).to.be.equal(1);
+			// let tickerIndex = await tickerContract.tickerIndex();
+			// expect(tickerIndex).to.be.equal(1);
 
 			// check the event
 			let tickerBuy = receipt.events?.at(receipt.events?.length-1);

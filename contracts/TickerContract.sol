@@ -19,7 +19,7 @@ contract TickerContract is OwnableUpgradeable {
 
     uint public rewardMul = 2; //reward mutiple
 
-    uint public tickerIndex  = 0;
+    // uint public tickerIndex  = 0;
 
     //onlyManager
     modifier onlyManager() {
@@ -52,13 +52,16 @@ contract TickerContract is OwnableUpgradeable {
     //user buy ticker by manager
     function buyTicker(
         address buyer,
+        uint tickerIndex,
         uint256 minerLevel,
         uint256 tickerPayAmount,
         uint256 multiple,
         address profitToken
     ) public onlyManager {
-        tickerIndex += 1;
+        // tickerIndex += 1;
         //receive user money
+        Ticker memory userTicker = userTickMap[buyer][tickerIndex];
+        require(userTicker.payAmount==0,"ticker exists");
         payToken.transferFrom(buyer, claimAccountAddress, tickerPayAmount);
         Ticker memory ticker = Ticker(buyer,minerLevel, tickerPayAmount,false,multiple,profitToken);
         userTickMap[buyer][tickerIndex]=ticker;
@@ -99,6 +102,10 @@ contract TickerContract is OwnableUpgradeable {
 
     function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
         claimAccountAddress = _claimAccountAddress;
+    }
+
+    function setTickerRewardAccount(address _tickerRewardAccount) public onlyManager {
+        tickerRewardAccount = _tickerRewardAccount;
     }
 
     

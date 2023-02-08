@@ -123,7 +123,7 @@ describe("Miner contract init and test", () => {
 			} = await loadFixture(
 				v2Fixture
 			);
-
+			let tickerIndex = 1;
 			await reaToken.mint(wallet.address, token0Amount);
 			let reaTokenDecimal = await reaToken.decimals();
 			console.log("reaTokenDecimal", reaTokenDecimal);
@@ -142,7 +142,7 @@ describe("Miner contract init and test", () => {
 			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
 			console.log("payAmount is:{}", minerReaAmount);
 			let profitToken = fil.address;
-			await expect(tickerContract.connect(user).buyTicker(user.address, 1, buyTickerReaAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
+			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex, 1, buyTickerReaAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
 			await reaToken.mint(user.address, buyTickerReaAmount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("balanceOfUser is:", balanceOfUser);
@@ -150,7 +150,7 @@ describe("Miner contract init and test", () => {
 			await tickerContract.setManager(user.address, true);
 			let minerLevel = 1;
 			let multiple = 3;
-			let tx = await tickerContract.connect(user).buyTicker(user.address, minerLevel, buyTickerReaAmount, multiple, profitToken, { from: user.address });
+			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex, minerLevel, buyTickerReaAmount, multiple, profitToken, { from: user.address });
 			let receipt = await tx.wait();
 			console.log("token0Amount is:", token0Amount);
 			console.log("buyTickerReaAmount is:", buyTickerReaAmount);
@@ -166,8 +166,8 @@ describe("Miner contract init and test", () => {
 			expect(userTicker.isUsed).to.be.equal(false);
 			expect(userTicker.multiple).to.be.equal(multiple);
 			expect(userTicker.profitToken).to.be.equal(profitToken);
-			let tickerIndex = await tickerContract.tickerIndex();
-			expect(tickerIndex).to.be.equal(1);
+			// let tickerIndex = await tickerContract.tickerIndex();
+			// expect(tickerIndex).to.be.equal(1);
 
 			// check the event
 			let tickerBuyEvent = receipt.events?.at(receipt.events?.length - 1);
