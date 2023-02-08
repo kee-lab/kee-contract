@@ -127,7 +127,7 @@ describe("Ticker contract init and test", () => {
 			await reaToken.mint(user.address,token0Amount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("balanceOfUser is:",balanceOfUser);
-			await reaToken.connect(user).approve(tickerContract.address,token0Amount,{from:user.address});
+			await reaToken.connect(user).approve(tickerContract.address,token0Amount.mul(10),{from:user.address});
 			await tickerContract.setManager(user.address,true);
 			let minerLevel = 1;
 			let multiple = 3;
@@ -160,6 +160,8 @@ describe("Ticker contract init and test", () => {
 			expect(tickerBuy?.args?.multiple).to.be.equal(multiple);
 			expect(tickerBuy?.args?.index).to.be.equal(tickerIndex);
 			expect(tickerBuy?.args?.profitToken).to.be.equal(fil.address);
+			await reaToken.mint(user.address,token0Amount);
+			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex,minerLevel,payAmount,multiple,fil.address,{from:user.address})).to.be.revertedWith("ticker exists");
 		});
 
 		it("buy ticker reward three reward", async () => {

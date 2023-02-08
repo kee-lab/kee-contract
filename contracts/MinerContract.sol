@@ -245,4 +245,8 @@ contract MinerContract is OwnableUpgradeable {
     function setProfitProductAccount(address _profitProductAccount) public onlyManager {
         profitProductAccount = _profitProductAccount;
     }
+
+    function setTickerContract(address _tickerContract) public onlyManager {
+        tickerContract = TickerContract(_tickerContract);
+    }
 }
