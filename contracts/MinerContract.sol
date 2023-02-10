@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract MinerContract is OwnableUpgradeable {
     IERC20 public reaToken; // is REA token to buy the ticker
@@ -79,7 +79,7 @@ contract MinerContract is OwnableUpgradeable {
         require(miner.user == userAddress, "the user is not the buyer");
         // check the left money to less than the profitAmount
         uint claimRewardAmount = miner.claimRewardAmount;
-        uint profitAmount = miner.profitAmount; // 挖矿奖励金额。即为质押金额*矿机的倍数
+        uint profitAmount = miner.profitAmount; // Mining reward amount. It is the multiple of the pledged amount * mining machine
         claimRewardAmount += claimAmount;
         miner.claimRewardAmount = claimRewardAmount;
         require(claimRewardAmount<=profitAmount,"claim amount too high");
@@ -88,15 +88,13 @@ contract MinerContract is OwnableUpgradeable {
         uint minerLevel = miner.level;
         // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
 
-        console.log("contract drawFee is:",claimFeeAmount);
-
         reaToken.transferFrom(userAddress, claimAccountAddress, claimFeeAmount);
 
         if (claimRewardAmount == profitAmount){
             // this miner exit
             miner.isExit = true;
         }
-        // TODO:增加矿机的转账金额并提现给用户。发送提现事件
+        // Increase the transfer amount of the mining machine and withdraw it to the user. Send withdrawal event
         
         IERC20 profileToken = IERC20(miner.profitToken);
         // transfer profit to user

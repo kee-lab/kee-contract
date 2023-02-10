@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IERC20.sol";
-// import "./libraries/RandomNumber.sol";
 
 contract TickerContract is OwnableUpgradeable {
     IERC20 public payToken; // is REA token to buy the ticker
