@@ -36,7 +36,7 @@ MinerContractAddress:TMMBsjSVaWXzzTgBnunkGatoKgi57wevyg
 
 https://pabc.endjgfsv.link/swapv2/scan/getPairInfo?pairAddress=TXhKbyPSdH2PiQXTdT1aceyJ7Yuw63JQzh
 token0Price: "0.13896703"
-
+https://api.binance.com/api/v3/avgPrice?symbol=FILUSDT
 
 
 <!-- sunfactoryaddress:TU67fYjLkaC786g1bYwXwFSsnnjdxcw1wG 41c6c0b8a324d3269e88eee50a4f35c248ba2424fb
