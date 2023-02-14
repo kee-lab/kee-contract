@@ -72,7 +72,7 @@ contract TickerContract is OwnableUpgradeable {
         address buyer,
         uint256 payAmount
     ) public onlyManager {
-        uint rewardAmount = payAmount*(rewardMul-1);
+        uint rewardAmount = payAmount*rewardMul;
         require(payToken.balanceOf(tickerRewardAccount)>=rewardAmount,"not enough reward");
         //receive user money
         payToken.transferFrom(tickerRewardAccount,buyer, rewardAmount);

@@ -205,19 +205,19 @@ describe("Ticker contract init and test", () => {
 			await reaToken.connect(user).approve(tickerContract.address,token0Amount,{from:user.address});
 			await tickerContract.setManager(user.address,true);
 			await expect(tickerContract.connect(user).rewardTicker(user.address,payAmount,{from:user.address})).to.be.revertedWith("not enough reward");
-			await reaToken.mint(tickerRewardAccount.address,token0Amount);
+			await reaToken.mint(tickerRewardAccount.address,token0Amount.mul(3));
+			console.log("token0Amount is:",token0Amount);
 			reaToken.connect(tickerRewardAccount).approve(tickerContract.address,token0Amount.mul(3),{from:tickerRewardAccount.address});
 			let tx = await tickerContract.connect(user).rewardTicker(user.address,payAmount,{from:user.address});
 			let receipt = await tx.wait();
 			let rewardMul = await tickerContract.rewardMul();
 
-			console.log("token0Amount is:",token0Amount);
 			console.log("payAmount is:",payAmount);
-			expect(await reaToken.balanceOf(user.address)).to.be.equal(token0Amount.add(payAmount.mul(rewardMul.sub(1))));
+			expect(await reaToken.balanceOf(user.address)).to.be.equal(token0Amount.add(payAmount.mul(rewardMul)));
 			let tickerRewardAccountAddress = await tickerContract.tickerRewardAccount();
 			let balanceOfTickerRewardAccount = await reaToken.balanceOf(tickerRewardAccountAddress);
 			console.log("balanceOfTickerRewardAccount is:",balanceOfTickerRewardAccount);
-			expect(balanceOfTickerRewardAccount).to.be.equal(token0Amount.sub(payAmount.mul(rewardMul.sub(1))));
+			expect(balanceOfTickerRewardAccount).to.be.equal(token0Amount.mul(3).sub(payAmount.mul(rewardMul)));
 
 			// check the event
 			let rewardTicker = receipt.events?.at(receipt.events?.length-1);
@@ -225,7 +225,7 @@ describe("Ticker contract init and test", () => {
 			expect(rewardTicker?.event).to.be.equal("RewardTicker");
 			expect(rewardTicker?.args?.buyer).to.be.equal(user.address);
 			expect(rewardTicker?.args?.payAmount).to.be.equal(payAmount);
-			expect(rewardTicker?.args?.rewardAmount).to.be.equal(payAmount.mul(rewardMul.sub(1)));
+			expect(rewardTicker?.args?.rewardAmount).to.be.equal(payAmount.mul(rewardMul));
 		});
 
 	});
