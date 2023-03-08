@@ -26,3 +26,4 @@ coverage.json
 .openzeppelin/unknown-97.json
 /target/
 /res/
+.deps/
