@@ -82,7 +82,8 @@ contract MinerContract is OwnableUpgradeable {
         uint profitAmount = miner.profitAmount; // Mining reward amount. It is the multiple of the pledged amount * mining machine
         claimRewardAmount += claimAmount;
         miner.claimRewardAmount = claimRewardAmount;
-        require(claimRewardAmount<=profitAmount,"claim amount too high");
+        // not limit the profitAmount
+        // require(claimRewardAmount<=profitAmount,"claim amount too high"); 
 
         //receive the fee
         uint minerLevel = miner.level;
