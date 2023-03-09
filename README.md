@@ -18,7 +18,7 @@ readTokenAddress:THGr2QTj5yChq3kvpmMADogKvvY9XxkXNR
 usdtTokenAddress:TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj
 filContractAddress:TVhTnr8TqheP2My6UNtuFze1mSw2B9pUW6 0xd86834b67495dF42a18ab55292b65E7e51FC8D42
 
-payREARewardWallet = TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f
+payREARewardWallet,tickerRewardAccount = TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f
 claimWallet = TYqFGVcr8He5f97UTa6EtM698FSMxPYFad
 blackHoleAddress:T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn
 ecologyAccount:TXUghVQyycqbZy7dVXKfFQTeMJhTdxXEro
@@ -49,3 +49,33 @@ factoryAddress:TEj47GpCXA6etbcbxEMAvr91sdkBBGMmuH
 routerAddress:TSgurtbb5PWspJ19kK4xvRdiYZk2JCMQkB
 oracleAddress:TWdu5u4wBeC8pZMo8zLvmE2Xz6W5oFoc6q
 pairAddress:0x9b555E3DddA7B39C5a8A2990120AC8AAd237b1fB -->
+
+--------------------------------------------------------------------
+Shasta测试网
+Shasta测试网各个参数与主网保持一致，目前Shasta测试网不支持运行一个节点加入其中。
+
+官网:https://www.trongrid.io/shasta
+水龙头:https://www.trongrid.io/faucet
+浏览器:https://shasta.tronscan.org
+HTTP API: https://api.shasta.trongrid.io
+grpc fullnode API: grpc.shasta.trongrid.io:50051
+grpc solidity API: grpc.shasta.trongrid.io:50061
+json-rpc API: https://api.shasta.trongrid.io/jsonrpc
+
+readTokenAddress:TPLU3kfVZqoGEsfBVMJmWXuP9wQBQs8XFQ
+usdtTokenAddress：TMEAXgQzSzJiFNYqpUSsaGGQy2v4bB5mh8
+filContractAddress:TFyfgLtCgaEz23Bk4MQ24axvmwk5UAcwjj
+
+payREARewardWallet,tickerRewardAccount = TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f
+claimWallet,claimAccount = TYqFGVcr8He5f97UTa6EtM698FSMxPYFad
+blackHoleAddress:T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn
+ecologyAccount:TXUghVQyycqbZy7dVXKfFQTeMJhTdxXEro
+teamRewardAccount:TSxMEhUv2ozAeodxgoEmCKXYQj4j15q79g
+storeUsdtAccount:TCHv1CxxdGoARJgv2R34uoHKQDYukNEenH
+profitProductAccount:TRH9v7XrBfD6oJ4pcVTSHsyWJ72cVofXGS
+
+
+
+walletAddress:TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy
+TickerContractAddress:TGbQy19rDmbwbPCz3LVmUZTgNRqtwWYaCd
+MinerContractAddress:TBFXX77CNFFBUQZRVA4cKFCNAhduUVwHsG
