@@ -20,7 +20,7 @@ filContractAddress:TVhTnr8TqheP2My6UNtuFze1mSw2B9pUW6 0xd86834b67495dF42a18ab552
 
 payREARewardWallet = TF2dVw7ohgm8mcgb9kGShRfAQEJhvyMq2f
 claimWallet = TYqFGVcr8He5f97UTa6EtM698FSMxPYFad
-blackHoleAddress:410000000000000000000000000000000000000000
+blackHoleAddress:T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn
 ecologyAccount:TXUghVQyycqbZy7dVXKfFQTeMJhTdxXEro
 teamRewardAccount:TSxMEhUv2ozAeodxgoEmCKXYQj4j15q79g
 storeUsdtAccount:TCHv1CxxdGoARJgv2R34uoHKQDYukNEenH
@@ -31,7 +31,8 @@ walletAddress:TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy
 TickerContractAddress:TVVYiR89Ty7FXWPi7jfjYBMNkmZvVwtse3
 <!-- MinerContractAddress:TJZRFtecoCtuH5iKbpadFG2L9D7mPaeYuw -->
 <!-- MinerContractAddress:TKNBKcw3tuMvnjRshDRVUu4wLGn5pe5Bor -->
-MinerContractAddress:TMMBsjSVaWXzzTgBnunkGatoKgi57wevyg
+<!-- MinerContractAddress:TMMBsjSVaWXzzTgBnunkGatoKgi57wevyg -->
+MinerContractAddress:TBHpHb4NA6MG4uSAZMmt8F8LVaygsEbdWD
 
 
 https://pabc.endjgfsv.link/swapv2/scan/getPairInfo?pairAddress=TXhKbyPSdH2PiQXTdT1aceyJ7Yuw63JQzh
