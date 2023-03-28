@@ -2,11 +2,32 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
 // import "hardhat/console.sol";
 
 contract MinerContract is OwnableUpgradeable {
+
+        // Add the library methods
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
+
+    // Declare a set state variable
+    EnumerableMap.AddressToUintMap private distributionMap;
+
+    function setDistributionMap(address[] distributionAddress,uint256[] distributionPercent) public onlyManager {
+        uint addressLength = distributionAddress.length;
+        uint percentLength = distributionPercent.length;
+        assert(addressLength==percentLength,"address not eq percent");
+        for(int j=0;j<distributionMap.size();j++) {
+            distributionMap.remove(j);
+        }
+        for(uint i = 0; i < addressLength; i++){
+            distributionMap.
+        }
+        distributionMap = _distributionMap;
+    }
+
     IERC20 public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
