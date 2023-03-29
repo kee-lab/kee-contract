@@ -36,7 +36,7 @@ contract MinerContract is OwnableUpgradeable {
         require(addressLength==percentLength,"address not eq percent");
         uint256 distributeLength = distributionMap.length();
         for(uint256 j=0;j<distributeLength;j++) {
-            (address deliveryAddress,uint256 _percent)=distributionMap.at(j);
+            (address deliveryAddress,uint256 _percent)=distributionMap.at(0);
             distributionMap.remove(deliveryAddress);
         }
         for(uint256 i = 0; i < addressLength; i++){
