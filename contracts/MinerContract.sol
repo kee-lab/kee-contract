@@ -13,32 +13,48 @@ contract MinerContract is OwnableUpgradeable {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     // Declare a set state variable
-    EnumerableMap.AddressToUintMap private distributionMap;
+    EnumerableMap.AddressToUintMap distributionMap;
 
-    function setDistributionMap(address[] distributionAddress,uint256[] distributionPercent) public onlyManager {
-        uint addressLength = distributionAddress.length;
-        uint percentLength = distributionPercent.length;
-        assert(addressLength==percentLength,"address not eq percent");
-        for(int j=0;j<distributionMap.size();j++) {
-            distributionMap.remove(j);
+    function distributionMapSize() public view returns(uint256){
+        return distributionMap.length();
+    }
+
+    function getDisributeAddresses() public view returns(address[] memory,uint256[] memory){
+        address[] memory addresses = new address[](distributionMap.length());
+        uint256[] memory percents = new uint256[](distributionMap.length());
+        for(uint256 i = 0; i <distributionMap.length(); i++){
+            (address dis,uint256 per)=distributionMap.at(i);
+            addresses[i] = dis;
+            percents[i] = per;
         }
-        for(uint i = 0; i < addressLength; i++){
-            distributionMap.
+        return (addresses,percents);
+    }
+
+    function setDistributionMap(address[] memory distributionAddresses,uint256[] memory distributionPercent) public onlyManager {
+        uint256 addressLength = distributionAddresses.length;
+        uint256 percentLength = distributionPercent.length;
+        require(addressLength==percentLength,"address not eq percent");
+        uint256 distributeLength = distributionMap.length();
+        for(uint256 j=0;j<distributeLength;j++) {
+            (address deliveryAddress,uint256 _percent)=distributionMap.at(j);
+            distributionMap.remove(deliveryAddress);
         }
-        distributionMap = _distributionMap;
+        for(uint256 i = 0; i < addressLength; i++){
+            distributionMap.set(distributionAddresses[i],distributionPercent[i]);
+        }
     }
 
     IERC20 public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
     mapping(address => bool) public isManager;
-    address public blackholeAddress;    // blackhole address
-    uint256 public blackHolePercent;    // blackhole percent
-    address public ecologyAddress;
-    uint256 public ecologyPercent;
-    address public teamRewardAddress;
-    uint256 public teamRewardPercent;
-    uint public base=100;   //  base 
+    // address public blackholeAddress;    // blackhole address
+    // uint256 public blackHolePercent;    // blackhole percent
+    // address public ecologyAddress;
+    // uint256 public ecologyPercent;
+    // address public teamRewardAddress;
+    // uint256 public teamRewardPercent;
+    uint public base=10000;   //  base 
     //store the fee token
     address public claimAccountAddress;
     //store the usdt token
@@ -49,7 +65,7 @@ contract MinerContract is OwnableUpgradeable {
 
     // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
 
-    mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
+    // mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
 
     //onlyManager
     modifier onlyManager() {
@@ -60,12 +76,14 @@ contract MinerContract is OwnableUpgradeable {
     function initialize(
         address _reaToken,
         address _usdtToken,
-        address _blackholeAddress,
-        uint256 _blackHolePercent,
-        address _ecologyAddress,
-        uint256 _ecologyPercent,
-        address _teamRewardAddress,
-        uint256 _teamRewardPercent,
+        address[] memory distributionAddresses,
+        uint256[] memory distributionPercent,
+        // address _blackholeAddress,
+        // uint256 _blackHolePercent,
+        // address _ecologyAddress,
+        // uint256 _ecologyPercent,
+        // address _teamRewardAddress,
+        // uint256 _teamRewardPercent,
         address _claimAccountAddress,
         address _tickerContractAddress,
         address _storeUsdtAddress,
@@ -73,19 +91,27 @@ contract MinerContract is OwnableUpgradeable {
     ) public initializer {
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
-        blackholeAddress = _blackholeAddress;
-        blackHolePercent = _blackHolePercent;
-        ecologyAddress = _ecologyAddress;
-        ecologyPercent = _ecologyPercent;
-        teamRewardAddress = _teamRewardAddress;
-        teamRewardPercent = _teamRewardPercent;
+
+        uint256 addressLength = distributionAddresses.length;
+        uint256 percentLength = distributionPercent.length;
+        require(addressLength==percentLength,"address not eq percent");
+        for(uint256 i = 0; i < addressLength; i++){
+            distributionMap.set(distributionAddresses[i],distributionPercent[i]);
+        }
+
+        // blackholeAddress = _blackholeAddress;
+        // blackHolePercent = _blackHolePercent;
+        // ecologyAddress = _ecologyAddress;
+        // ecologyPercent = _ecologyPercent;
+        // teamRewardAddress = _teamRewardAddress;
+        // teamRewardPercent = _teamRewardPercent;
         __Ownable_init();
         isManager[msg.sender] = true;
-        levelFeeMapping[1] = 2; 
-        levelFeeMapping[2] = 4;
-        levelFeeMapping[3] = 6; 
-        levelFeeMapping[4] = 10; 
-        levelFeeMapping[5] = 20; 
+        // levelFeeMapping[1] = 2; 
+        // levelFeeMapping[2] = 4;
+        // levelFeeMapping[3] = 6; 
+        // levelFeeMapping[4] = 10; 
+        // levelFeeMapping[5] = 20; 
         claimAccountAddress = _claimAccountAddress;
         tickerContract = TickerContract(_tickerContractAddress);
         storeUsdtAddress = _storeUsdtAddress;
@@ -172,9 +198,14 @@ contract MinerContract is OwnableUpgradeable {
         //receive user money
         if (payAmount > 0) {
             reaToken.transferFrom(buyer, address(this), payAmount);
-            reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
-            reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
-            reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
+            uint256 distributeLength = distributionMap.length();
+            for(uint256 i = 0; i < distributeLength; i){
+                (address distributeAddress,uint256 percent) = distributionMap.at(i);
+                reaToken.transfer(distributeAddress, payAmount*percent/base);
+            }
+            // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
+            // reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
+            // reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
 
         }
         if (usdtAmount > 0) {
@@ -217,42 +248,42 @@ contract MinerContract is OwnableUpgradeable {
         isManager[_manager] = _flag;
     }
 
-    function setBloackHoleAddress(address _blackholeAddress)
-        public
-        onlyManager
-    {
-        blackholeAddress = _blackholeAddress;
-    }
+    // function setBloackHoleAddress(address _blackholeAddress)
+    //     public
+    //     onlyManager
+    // {
+    //     blackholeAddress = _blackholeAddress;
+    // }
 
-    function setEcologyAddress(address _ecologyAddress) public onlyManager {
-        ecologyAddress = _ecologyAddress;
-    }
+    // function setEcologyAddress(address _ecologyAddress) public onlyManager {
+    //     ecologyAddress = _ecologyAddress;
+    // }
 
-    function setTeamRewardAddress(address _teamRewardAddress)
-        public
-        onlyManager
-    {
-        teamRewardAddress = _teamRewardAddress;
-    }
+    // function setTeamRewardAddress(address _teamRewardAddress)
+    //     public
+    //     onlyManager
+    // {
+    //     teamRewardAddress = _teamRewardAddress;
+    // }
 
-    function setBlackHolePercent(uint256 _blackHolePercent) public onlyManager {
-        blackHolePercent = _blackHolePercent;
-    }
+    // function setBlackHolePercent(uint256 _blackHolePercent) public onlyManager {
+    //     blackHolePercent = _blackHolePercent;
+    // }
 
-    function setEcologyPercent(uint256 _ecologyPercent) public onlyManager {
-        ecologyPercent = _ecologyPercent;
-    }
+    // function setEcologyPercent(uint256 _ecologyPercent) public onlyManager {
+    //     ecologyPercent = _ecologyPercent;
+    // }
 
-    function setLevelFee(uint level,uint fee) public onlyManager {
-        levelFeeMapping[level]=fee;
-    }
+    // function setLevelFee(uint level,uint fee) public onlyManager {
+    //     levelFeeMapping[level]=fee;
+    // }
 
-    function setTeamRewardPercent(uint256 _teamRewardPercent)
-        public
-        onlyManager
-    {
-        teamRewardPercent = _teamRewardPercent;
-    }
+    // function setTeamRewardPercent(uint256 _teamRewardPercent)
+    //     public
+    //     onlyManager
+    // {
+    //     teamRewardPercent = _teamRewardPercent;
+    // }
 
     function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
         claimAccountAddress = _claimAccountAddress;
