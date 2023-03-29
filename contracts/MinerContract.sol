@@ -44,6 +44,10 @@ contract MinerContract is OwnableUpgradeable {
         }
     }
 
+    function setIsSendProfit(bool _isSendProfit) public onlyManager {
+        isSendProfit = _isSendProfit;
+    }
+
     IERC20 public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
@@ -56,7 +60,7 @@ contract MinerContract is OwnableUpgradeable {
     // uint256 public teamRewardPercent;
     uint public base=10000;   //  base 
     //store the fee token
-    address public claimAccountAddress;
+    // address public claimAccountAddress;
     //store the usdt token
     address public storeUsdtAddress;
     // the profit product account
@@ -66,6 +70,8 @@ contract MinerContract is OwnableUpgradeable {
     // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
 
     // mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
+
+    bool public isSendProfit = true;
 
     //onlyManager
     modifier onlyManager() {
@@ -84,11 +90,13 @@ contract MinerContract is OwnableUpgradeable {
         // uint256 _ecologyPercent,
         // address _teamRewardAddress,
         // uint256 _teamRewardPercent,
-        address _claimAccountAddress,
+        // address _claimAccountAddress,
         address _tickerContractAddress,
         address _storeUsdtAddress,
-        address _profitProductAccount
+        address _profitProductAccount,
+        bool _isSendProfit
     ) public initializer {
+        isSendProfit = _isSendProfit;
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
 
@@ -112,7 +120,7 @@ contract MinerContract is OwnableUpgradeable {
         // levelFeeMapping[3] = 6; 
         // levelFeeMapping[4] = 10; 
         // levelFeeMapping[5] = 20; 
-        claimAccountAddress = _claimAccountAddress;
+        // claimAccountAddress = _claimAccountAddress;
         tickerContract = TickerContract(_tickerContractAddress);
         storeUsdtAddress = _storeUsdtAddress;
         profitProductAccount = _profitProductAccount;
@@ -135,8 +143,12 @@ contract MinerContract is OwnableUpgradeable {
         //receive the fee
         uint minerLevel = miner.level;
         // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
-
-        reaToken.transferFrom(userAddress, claimAccountAddress, claimFeeAmount);
+        require(claimFeeAmount>0,"fee too low!");
+        reaToken.transferFrom(userAddress, address(this), claimFeeAmount);
+        for(uint256 i = 0; i < distributionMap.length(); i){
+            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+            reaToken.transfer(distributeAddress, claimFeeAmount*percent/base);
+        }
 
         if (claimRewardAmount == profitAmount){
             // this miner exit
@@ -145,9 +157,10 @@ contract MinerContract is OwnableUpgradeable {
         // Increase the transfer amount of the mining machine and withdraw it to the user. Send withdrawal event
         
         IERC20 profileToken = IERC20(miner.profitToken);
-        // transfer profit to user
-        profileToken.transferFrom(profitProductAccount,userAddress, claimAmount);
-        
+        if(isSendProfit){
+            // transfer profit to user
+            profileToken.transferFrom(profitProductAccount,userAddress, claimAmount);
+        }
         // emit the ClaimPorfit event
         emit ClaimProfit(userAddress,tickerIndex,minerLevel,miner.multiple,claimAmount,claimFeeAmount,miner.profitToken);
     }
@@ -196,18 +209,16 @@ contract MinerContract is OwnableUpgradeable {
         //notice tickerContract.useTicker method can be called by manager,so must set this contract is the manager of the tickerContract
         tickerContract.useTicker(buyer, tickerIndex);
         //receive user money
-        if (payAmount > 0) {
-            reaToken.transferFrom(buyer, address(this), payAmount);
-            uint256 distributeLength = distributionMap.length();
-            for(uint256 i = 0; i < distributeLength; i){
-                (address distributeAddress,uint256 percent) = distributionMap.at(i);
-                reaToken.transfer(distributeAddress, payAmount*percent/base);
-            }
-            // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
-            // reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
-            // reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
-
+        require(payAmount>0,"fee too low!");
+        reaToken.transferFrom(buyer, address(this), payAmount);
+        for(uint256 i = 0; i < distributionMap.length(); i){
+            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+            reaToken.transfer(distributeAddress, payAmount*percent/base);
         }
+        // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
+        // reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
+        // reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
+
         if (usdtAmount > 0) {
             usdtToken.transferFrom(buyer, storeUsdtAddress, usdtAmount);
         }
@@ -285,9 +296,9 @@ contract MinerContract is OwnableUpgradeable {
     //     teamRewardPercent = _teamRewardPercent;
     // }
 
-    function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
-        claimAccountAddress = _claimAccountAddress;
-    }
+    // function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
+    //     claimAccountAddress = _claimAccountAddress;
+    // }
 
     function setStoreUsdtAddress(address _storeUsdtAddress) public onlyManager {
         storeUsdtAddress = _storeUsdtAddress;

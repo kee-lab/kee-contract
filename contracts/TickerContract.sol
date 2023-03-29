@@ -2,9 +2,49 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./interfaces/IERC20.sol";
 
 contract TickerContract is OwnableUpgradeable {
+
+        // Add the library methods
+    using EnumerableMap for EnumerableMap.AddressToUintMap;
+
+    // Declare a set state variable
+    EnumerableMap.AddressToUintMap distributionMap;
+
+    function distributionMapSize() public view returns(uint256){
+        return distributionMap.length();
+    }
+
+    function getDisributeAddresses() public view returns(address[] memory,uint256[] memory){
+        address[] memory addresses = new address[](distributionMap.length());
+        uint256[] memory percents = new uint256[](distributionMap.length());
+        for(uint256 i = 0; i <distributionMap.length(); i++){
+            (address dis,uint256 per)=distributionMap.at(i);
+            addresses[i] = dis;
+            percents[i] = per;
+        }
+        return (addresses,percents);
+    }
+
+    function setDistributionMap(address[] memory distributionAddresses,uint256[] memory distributionPercent) public onlyManager {
+        uint256 addressLength = distributionAddresses.length;
+        uint256 percentLength = distributionPercent.length;
+        require(addressLength==percentLength,"address not eq percent");
+        uint256 distributeLength = distributionMap.length();
+        for(uint256 j=0;j<distributeLength;j++) {
+            (address deliveryAddress,uint256 _percent)=distributionMap.at(0);
+            distributionMap.remove(deliveryAddress);
+        }
+        for(uint256 i = 0; i < addressLength; i++){
+            distributionMap.set(distributionAddresses[i],distributionPercent[i]);
+        }
+    }
+
+
+    uint public base=10000;   //  base 
+
     IERC20 public payToken; // is REA token to buy the ticker
     mapping(address => bool) public isManager;
 
@@ -61,7 +101,13 @@ contract TickerContract is OwnableUpgradeable {
         //receive user money
         Ticker memory userTicker = userTickMap[buyer][tickerIndex];
         require(userTicker.payAmount==0,"ticker exists");
-        payToken.transferFrom(buyer, claimAccountAddress, tickerPayAmount);
+        require(tickerPayAmount>0,"fee too low!");
+        payToken.transferFrom(buyer, address(this), tickerPayAmount);
+        for(uint256 i = 0; i < distributionMap.length(); i){
+            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+            payToken.transfer(distributeAddress, tickerPayAmount*percent/base);
+        }
+
         Ticker memory ticker = Ticker(buyer,minerLevel, tickerPayAmount,false,multiple,profitToken);
         userTickMap[buyer][tickerIndex]=ticker;
         emit TickerBuy(buyer,minerLevel, tickerPayAmount,multiple,tickerIndex,profitToken);
