@@ -13,36 +13,70 @@ contract MinerContract is OwnableUpgradeable {
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
     // Declare a set state variable
-    EnumerableMap.AddressToUintMap distributionMap;
+    EnumerableMap.AddressToUintMap claimFeeDisMap;
 
-    function distributionMapSize() public view returns(uint256){
-        return distributionMap.length();
+    function claimFeeMapSize() public view returns(uint256){
+        return claimFeeDisMap.length();
     }
 
-    function getDisributeAddresses() public view returns(address[] memory,uint256[] memory){
-        address[] memory addresses = new address[](distributionMap.length());
-        uint256[] memory percents = new uint256[](distributionMap.length());
-        for(uint256 i = 0; i <distributionMap.length(); i++){
-            (address dis,uint256 per)=distributionMap.at(i);
+    function getClaimFeeMap() public view returns(address[] memory,uint256[] memory){
+        address[] memory addresses = new address[](claimFeeDisMap.length());
+        uint256[] memory percents = new uint256[](claimFeeDisMap.length());
+        for(uint256 i = 0; i <claimFeeDisMap.length(); i++){
+            (address dis,uint256 per)=claimFeeDisMap.at(i);
             addresses[i] = dis;
             percents[i] = per;
         }
         return (addresses,percents);
     }
 
-    function setDistributionMap(address[] memory distributionAddresses,uint256[] memory distributionPercent) public onlyManager {
+    function setClaimFeeMap(address[] memory distributionAddresses,uint256[] memory distributionPercent) public onlyManager {
         uint256 addressLength = distributionAddresses.length;
         uint256 percentLength = distributionPercent.length;
         require(addressLength==percentLength,"address not eq percent");
-        uint256 distributeLength = distributionMap.length();
+        uint256 distributeLength = claimFeeDisMap.length();
         for(uint256 j=0;j<distributeLength;j++) {
-            (address deliveryAddress,uint256 _percent)=distributionMap.at(0);
-            distributionMap.remove(deliveryAddress);
+            (address deliveryAddress,uint256 _percent)=claimFeeDisMap.at(0);
+            claimFeeDisMap.remove(deliveryAddress);
         }
         for(uint256 i = 0; i < addressLength; i++){
-            distributionMap.set(distributionAddresses[i],distributionPercent[i]);
+            claimFeeDisMap.set(distributionAddresses[i],distributionPercent[i]);
         }
     }
+
+    // add depoist fee map 
+    // Declare a set state variable
+    EnumerableMap.AddressToUintMap depositFeeDisMap;
+
+    function depositFeeDisMapSize() public view returns(uint256){
+        return depositFeeDisMap.length();
+    }
+
+    function getDepositFeeMap() public view returns(address[] memory,uint256[] memory){
+        address[] memory addresses = new address[](depositFeeDisMap.length());
+        uint256[] memory percents = new uint256[](depositFeeDisMap.length());
+        for(uint256 i = 0; i <depositFeeDisMap.length(); i++){
+            (address dis,uint256 per)=depositFeeDisMap.at(i);
+            addresses[i] = dis;
+            percents[i] = per;
+        }
+        return (addresses,percents);
+    }
+
+    function setDepositFeeMap(address[] memory distributionAddresses,uint256[] memory distributionPercent) public onlyManager {
+        uint256 addressLength = distributionAddresses.length;
+        uint256 percentLength = distributionPercent.length;
+        require(addressLength==percentLength,"address not eq percent");
+        uint256 distributeLength = depositFeeDisMap.length();
+        for(uint256 j=0;j<distributeLength;j++) {
+            (address deliveryAddress,uint256 _percent)=depositFeeDisMap.at(0);
+            depositFeeDisMap.remove(deliveryAddress);
+        }
+        for(uint256 i = 0; i < addressLength; i++){
+            depositFeeDisMap.set(distributionAddresses[i],distributionPercent[i]);
+        }
+    }
+    // ----- end adddepoistfeemap
 
     function setIsSendProfit(bool _isSendProfit) public onlyManager {
         isSendProfit = _isSendProfit;
@@ -82,8 +116,10 @@ contract MinerContract is OwnableUpgradeable {
     function initialize(
         address _reaToken,
         address _usdtToken,
-        address[] memory distributionAddresses,
-        uint256[] memory distributionPercent,
+        address[] memory claimFeeAddresses,
+        uint256[] memory calimFeePercent,
+        address[] memory depositFeeAddresses,
+        uint256[] memory depositFeePercent,
         // address _blackholeAddress,
         // uint256 _blackHolePercent,
         // address _ecologyAddress,
@@ -100,11 +136,18 @@ contract MinerContract is OwnableUpgradeable {
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
 
-        uint256 addressLength = distributionAddresses.length;
-        uint256 percentLength = distributionPercent.length;
-        require(addressLength==percentLength,"address not eq percent");
-        for(uint256 i = 0; i < addressLength; i++){
-            distributionMap.set(distributionAddresses[i],distributionPercent[i]);
+        uint256 claiAddressLength = claimFeeAddresses.length;
+        uint256 claimPercentLength = calimFeePercent.length;
+        require(claiAddressLength==claimPercentLength,"address not eq percent");
+        for(uint256 i = 0; i < claiAddressLength; i++){
+            claimFeeDisMap.set(claimFeeAddresses[i],calimFeePercent[i]);
+        }
+
+        uint256 depositAddressLength = depositFeeAddresses.length;
+        uint256 depositPercentLength = depositFeePercent.length;
+        require(depositAddressLength==depositPercentLength,"address not eq percent");
+        for(uint256 i = 0; i < depositAddressLength; i++){
+            claimFeeDisMap.set(depositFeeAddresses[i],depositFeePercent[i]);
         }
 
         // blackholeAddress = _blackholeAddress;
@@ -145,8 +188,8 @@ contract MinerContract is OwnableUpgradeable {
         // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
         require(claimFeeAmount>0,"fee too low!");
         reaToken.transferFrom(userAddress, address(this), claimFeeAmount);
-        for(uint256 i = 0; i < distributionMap.length(); i){
-            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+        for(uint256 i = 0; i < claimFeeDisMap.length(); i){
+            (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
             reaToken.transfer(distributeAddress, claimFeeAmount*percent/base);
         }
 
@@ -211,8 +254,8 @@ contract MinerContract is OwnableUpgradeable {
         //receive user money
         require(payAmount>0,"fee too low!");
         reaToken.transferFrom(buyer, address(this), payAmount);
-        for(uint256 i = 0; i < distributionMap.length(); i){
-            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+        for(uint256 i = 0; i < depositFeeDisMap.length(); i){
+            (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
             reaToken.transfer(distributeAddress, payAmount*percent/base);
         }
         // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
