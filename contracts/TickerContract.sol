@@ -53,8 +53,8 @@ contract TickerContract is OwnableUpgradeable {
     // please prepare reward token in this account and approve max amount to this contract.
     address public tickerRewardAccount;
 
-    //store the fee token
-    address public claimAccountAddress;
+    // //store the fee token
+    // address public claimAccountAddress;
 
     uint public rewardMul = 2; //reward mutiple
 
@@ -66,10 +66,19 @@ contract TickerContract is OwnableUpgradeable {
         _;
     }
 
-    function initialize(address _payToken,address _tickerRewardAccount,address _claimAccountAddress) public initializer {
+    function initialize(address _payToken,address _tickerRewardAccount,address[] memory claimFeeAddresses,uint256[] memory calimFeePercent) public initializer {
+
+        uint256 claiAddressLength = claimFeeAddresses.length;
+        uint256 claimPercentLength = calimFeePercent.length;
+        require(claiAddressLength==claimPercentLength,"address not eq percent");
+        for(uint256 i = 0; i < claiAddressLength; i++){
+            distributionMap.set(claimFeeAddresses[i],calimFeePercent[i]);
+        }
+
+
         payToken = IERC20(_payToken);
         tickerRewardAccount=_tickerRewardAccount;
-        claimAccountAddress = _claimAccountAddress;
+        // claimAccountAddress = _claimAccountAddress;
         __Ownable_init();
 
         isManager[msg.sender] = true;
@@ -143,10 +152,6 @@ contract TickerContract is OwnableUpgradeable {
 
     function setRewardMultiple(uint _rewardMul) public onlyManager {
         rewardMul = _rewardMul;
-    }
-
-    function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
-        claimAccountAddress = _claimAccountAddress;
     }
 
     function setTickerRewardAccount(address _tickerRewardAccount) public onlyManager {
