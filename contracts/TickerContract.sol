@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./interfaces/IERC20.sol";
+// import "hardhat/console.sol";
 
 contract TickerContract is OwnableUpgradeable {
 
@@ -112,8 +113,10 @@ contract TickerContract is OwnableUpgradeable {
         require(userTicker.payAmount==0,"ticker exists");
         require(tickerPayAmount>0,"fee too low!");
         payToken.transferFrom(buyer, address(this), tickerPayAmount);
-        for(uint256 i = 0; i < distributionMap.length(); i){
+        // console.log("contract tickerPayAmount is:",tickerPayAmount);
+        for(uint256 i = 0; i < distributionMap.length(); i++){
             (address distributeAddress,uint256 percent) = distributionMap.at(i);
+            // console.log("contract percent is:",percent);
             payToken.transfer(distributeAddress, tickerPayAmount*percent/base);
         }
 

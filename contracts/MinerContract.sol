@@ -116,10 +116,10 @@ contract MinerContract is OwnableUpgradeable {
     function initialize(
         address _reaToken,
         address _usdtToken,
-        address[] memory claimFeeAddresses,
-        uint256[] memory calimFeePercent,
         address[] memory depositFeeAddresses,
         uint256[] memory depositFeePercent,
+        address[] memory claimFeeAddresses,
+        uint256[] memory calimFeePercent,
         // address _blackholeAddress,
         // uint256 _blackHolePercent,
         // address _ecologyAddress,
@@ -136,18 +136,18 @@ contract MinerContract is OwnableUpgradeable {
         reaToken = IERC20(_reaToken);
         usdtToken = IERC20(_usdtToken);
 
+        uint256 depositAddressLength = depositFeeAddresses.length;
+        uint256 depositPercentLength = depositFeePercent.length;
+        require(depositAddressLength==depositPercentLength,"address not eq percent");
+        for(uint256 i = 0; i < depositAddressLength; i++){
+            depositFeeDisMap.set(depositFeeAddresses[i],depositFeePercent[i]);
+        }
+
         uint256 claiAddressLength = claimFeeAddresses.length;
         uint256 claimPercentLength = calimFeePercent.length;
         require(claiAddressLength==claimPercentLength,"address not eq percent");
         for(uint256 i = 0; i < claiAddressLength; i++){
             claimFeeDisMap.set(claimFeeAddresses[i],calimFeePercent[i]);
-        }
-
-        uint256 depositAddressLength = depositFeeAddresses.length;
-        uint256 depositPercentLength = depositFeePercent.length;
-        require(depositAddressLength==depositPercentLength,"address not eq percent");
-        for(uint256 i = 0; i < depositAddressLength; i++){
-            claimFeeDisMap.set(depositFeeAddresses[i],depositFeePercent[i]);
         }
 
         // blackholeAddress = _blackholeAddress;
@@ -188,12 +188,15 @@ contract MinerContract is OwnableUpgradeable {
         // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
         require(claimFeeAmount>0,"fee too low!");
         reaToken.transferFrom(userAddress, address(this), claimFeeAmount);
-        for(uint256 i = 0; i < claimFeeDisMap.length(); i){
+        // console.log("contract claim claimFeeAmount is:",claimFeeAmount);
+        for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
             (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
+            // console.log("contract claim percent is:",percent);
             reaToken.transfer(distributeAddress, claimFeeAmount*percent/base);
         }
 
-        if (claimRewardAmount == profitAmount){
+        if (claimRewardAmount >= profitAmount){
+            // console.log("is exit,claimRewardAmount,profitAmount",claimRewardAmount,profitAmount);
             // this miner exit
             miner.isExit = true;
         }
@@ -254,8 +257,10 @@ contract MinerContract is OwnableUpgradeable {
         //receive user money
         require(payAmount>0,"fee too low!");
         reaToken.transferFrom(buyer, address(this), payAmount);
-        for(uint256 i = 0; i < depositFeeDisMap.length(); i){
+        // console.log("contract pledge payAmount is:",payAmount);
+        for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
             (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
+            // console.log("contract pledge percent is:",percent);
             reaToken.transfer(distributeAddress, payAmount*percent/base);
         }
         // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
