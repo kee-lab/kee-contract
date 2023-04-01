@@ -28,11 +28,13 @@ profitProductAccount:TRH9v7XrBfD6oJ4pcVTSHsyWJ72cVofXGS
 
 
 walletAddress:TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy
-TickerContractAddress:TVVYiR89Ty7FXWPi7jfjYBMNkmZvVwtse3
+TickerContractAddress:TEf48MAscnur9nFWiicLPzesoFn3uR1rMz
+<!-- TickerContractAddress:TVVYiR89Ty7FXWPi7jfjYBMNkmZvVwtse3 -->
 <!-- MinerContractAddress:TJZRFtecoCtuH5iKbpadFG2L9D7mPaeYuw -->
 <!-- MinerContractAddress:TKNBKcw3tuMvnjRshDRVUu4wLGn5pe5Bor -->
 <!-- MinerContractAddress:TMMBsjSVaWXzzTgBnunkGatoKgi57wevyg -->
-MinerContractAddress:TBHpHb4NA6MG4uSAZMmt8F8LVaygsEbdWD
+MinerContractAddress:TTbkkXGFsD6Cwf3d4EFGqgbNdTmeqbZBhh
+<!-- MinerContractAddress:TBHpHb4NA6MG4uSAZMmt8F8LVaygsEbdWD -->
 
 
 https://pabc.endjgfsv.link/swapv2/scan/getPairInfo?pairAddress=TXhKbyPSdH2PiQXTdT1aceyJ7Yuw63JQzh
@@ -51,7 +53,7 @@ oracleAddress:TWdu5u4wBeC8pZMo8zLvmE2Xz6W5oFoc6q
 pairAddress:0x9b555E3DddA7B39C5a8A2990120AC8AAd237b1fB -->
 
 --------------------------------------------------------------------
-Shasta测试网
+<!-- Shasta测试网
 Shasta测试网各个参数与主网保持一致，目前Shasta测试网不支持运行一个节点加入其中。
 
 官网:https://www.trongrid.io/shasta
@@ -78,4 +80,4 @@ profitProductAccount:TRH9v7XrBfD6oJ4pcVTSHsyWJ72cVofXGS
 
 walletAddress:TEeeCkMA3gXekaKRPYMhhEwUkve6YBCTVy
 TickerContractAddress:TGbQy19rDmbwbPCz3LVmUZTgNRqtwWYaCd
-MinerContractAddress:TBFXX77CNFFBUQZRVA4cKFCNAhduUVwHsG
+MinerContractAddress:TBFXX77CNFFBUQZRVA4cKFCNAhduUVwHsG -->

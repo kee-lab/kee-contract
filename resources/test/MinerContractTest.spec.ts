@@ -48,8 +48,8 @@ describe("Miner contract init and test", () => {
 		await fil.initialize("fil token", "fil");
 
 		// deploy V2
-		const v2factory = await ethers.getContractFactory("SunswapV2Factory");
-		const factoryV2 = await v2factory.deploy(wallet.address);
+		// const v2factory = await ethers.getContractFactory("SunswapV2Factory");
+		// const factoryV2 = await v2factory.deploy(wallet.address);
 
 		// const SunswapV2Router02 = await ethers.getContractFactory("SunswapV2Router02");
 		// const sunswapV2Router02 = await SunswapV2Router02.deploy(factoryV2.address, reaToken.address);
@@ -90,7 +90,6 @@ describe("Miner contract init and test", () => {
 			storeUsdtAccount.address,profitProductAccount.address,true);
 
 		return {
-			factoryV2,
 			wallet,
 			user,
 			profitProductAccount,
@@ -133,7 +132,7 @@ describe("Miner contract init and test", () => {
 
 
 		it("pledge miner", async () => {
-			const { factoryV2,
+			const { 
 				wallet,
 				user,
 				profitProductAccount,
