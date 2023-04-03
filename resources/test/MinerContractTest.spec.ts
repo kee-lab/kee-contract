@@ -131,6 +131,106 @@ describe("Miner contract init and test", () => {
 		// const expectedOutputAmount = BigNumber.from("1662497915624478906");
 
 
+
+
+		it.only("test modify ticker map", async () => {
+			const { 
+				wallet,
+				user,
+				profitProductAccount,
+				usdtToken,
+				fil,
+				reaToken,
+				tickerContract,
+				minerContract,
+				address1,
+				address2,
+				address3,
+				address4,
+				address5,
+				address6,
+				address11,
+				address22,
+				address33,
+				address44,
+				address55,
+				address66,
+				address444,
+				address555,
+				address666,
+			} = await loadFixture(
+				v2Fixture
+			);
+			// [address111.address,address444.address,address555.address,address666.address],
+			// [5000,2500,1500,1000]);
+			var [addresses,percents] = await tickerContract.getDistributeAddresses();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+			await tickerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await tickerContract.getDistributeAddresses();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+
+		});
+
+
+		it("test modify miner map", async () => {
+			const { 
+				wallet,
+				user,
+				profitProductAccount,
+				usdtToken,
+				fil,
+				reaToken,
+				tickerContract,
+				minerContract,
+				address1,
+				address2,
+				address3,
+				address4,
+				address5,
+				address6,
+				address11,
+				address22,
+				address33,
+				address44,
+				address55,
+				address66,
+				address444,
+				address555,
+				address666,
+			} = await loadFixture(
+				v2Fixture
+			);
+			// [address2.address,address3.address,address4.address,address5.address,address6.address],
+			// [3000,6000,500,300,200],
+			var [addresses,percents] = await tickerContract.getClaimFeeMap();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+			await tickerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await tickerContract.getClaimFeeMap();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+
+
+
+			// [address44.address,address55.address,address66.address],
+			// [5000,3000,2000],
+			var [addresses,percents] = await tickerContract.getDepositFeeMap();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+			await tickerContract.setDepositFeeMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await tickerContract.getDepositFeeMap();
+			console.log("addresses is:",addresses);
+			console.log("percents is:",percents);
+
+		});
+
+
+
+
+
+
 		it("pledge miner", async () => {
 			const { 
 				wallet,
