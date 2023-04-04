@@ -133,7 +133,7 @@ describe("Miner contract init and test", () => {
 
 
 
-		it.only("test modify ticker map", async () => {
+		it("test modify ticker map", async () => {
 			const { 
 				wallet,
 				user,
@@ -142,19 +142,7 @@ describe("Miner contract init and test", () => {
 				fil,
 				reaToken,
 				tickerContract,
-				minerContract,
-				address1,
-				address2,
-				address3,
-				address4,
-				address5,
-				address6,
-				address11,
-				address22,
-				address33,
-				address44,
-				address55,
-				address66,
+				address111,
 				address444,
 				address555,
 				address666,
@@ -163,13 +151,28 @@ describe("Miner contract init and test", () => {
 			);
 			// [address111.address,address444.address,address555.address,address666.address],
 			// [5000,2500,1500,1000]);
-			var [addresses,percents] = await tickerContract.getDistributeAddresses();
+			var [addresses,percents] = await tickerContract.getDisributeAddresses();
 			console.log("addresses is:",addresses);
+			expect(addresses[0]).to.be.equal(address111.address);
+			expect(addresses[1]).to.be.equal(address444.address);
+			expect(addresses[2]).to.be.equal(address555.address);
+			expect(addresses[3]).to.be.equal(address666.address);
 			console.log("percents is:",percents);
-			await tickerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
-			var [addresses,percents] = await tickerContract.getDistributeAddresses();
+			expect(percents[0]).to.be.equal(5000);
+			expect(percents[1]).to.be.equal(2500);
+			expect(percents[2]).to.be.equal(1500);
+			expect(percents[3]).to.be.equal(1000);
+			console.log("percents is:",percents);
+			console.log("---------------------");
+			await tickerContract.setDistributionMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await tickerContract.getDisributeAddresses();
 			console.log("addresses is:",addresses);
+			expect(addresses[0]).to.be.equal(address555.address);
+			expect(addresses[1]).to.be.equal(address444.address);
 			console.log("percents is:",percents);
+			expect(percents[0]).to.be.equal(1500);
+			expect(percents[1]).to.be.equal(2500);
+			console.log("---------------------");
 
 		});
 
@@ -204,25 +207,54 @@ describe("Miner contract init and test", () => {
 			);
 			// [address2.address,address3.address,address4.address,address5.address,address6.address],
 			// [3000,6000,500,300,200],
-			var [addresses,percents] = await tickerContract.getClaimFeeMap();
+			var [addresses,percents] = await minerContract.getDepositFeeMap();
 			console.log("addresses is:",addresses);
 			console.log("percents is:",percents);
-			await tickerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
-			var [addresses,percents] = await tickerContract.getClaimFeeMap();
-			console.log("addresses is:",addresses);
-			console.log("percents is:",percents);
+			console.log("---------------------");
 
+			expect(addresses[0]).to.be.equal(address2.address);
+			expect(addresses[1]).to.be.equal(address3.address);
+			expect(addresses[2]).to.be.equal(address4.address);
+			expect(addresses[3]).to.be.equal(address5.address);
+			expect(addresses[4]).to.be.equal(address6.address);
+			expect(percents[0]).to.be.equal(3000);
+			expect(percents[1]).to.be.equal(6000);
+			expect(percents[2]).to.be.equal(500);
+			expect(percents[3]).to.be.equal(300);
+			expect(percents[4]).to.be.equal(200);
+
+			await minerContract.setDepositFeeMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await minerContract.getDepositFeeMap();
+			expect(addresses[0]).to.be.equal(address555.address);
+			expect(addresses[1]).to.be.equal(address444.address);
+			console.log("percents is:",percents);
+			expect(percents[0]).to.be.equal(1500);
+			expect(percents[1]).to.be.equal(2500);
+			console.log("---------------------");
 
 
 			// [address44.address,address55.address,address66.address],
 			// [5000,3000,2000],
-			var [addresses,percents] = await tickerContract.getDepositFeeMap();
+			var [addresses,percents] = await minerContract.getClaimFeeMap();
+			console.log("addresses is:",addresses);
+			expect(addresses[0]).to.be.equal(address44.address);
+			expect(addresses[1]).to.be.equal(address55.address);
+			expect(addresses[2]).to.be.equal(address66.address);
+			console.log("percents is:",percents);
+			expect(percents[0]).to.be.equal(5000);
+			expect(percents[1]).to.be.equal(3000);
+			expect(percents[2]).to.be.equal(2000);
+			console.log("---------------------");
+			await minerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
+			var [addresses,percents] = await minerContract.getClaimFeeMap();
 			console.log("addresses is:",addresses);
 			console.log("percents is:",percents);
-			await tickerContract.setDepositFeeMap([address555.address,address444.address],[1500,2500]);
-			var [addresses,percents] = await tickerContract.getDepositFeeMap();
-			console.log("addresses is:",addresses);
+			console.log("---------------------");
+			expect(addresses[0]).to.be.equal(address555.address);
+			expect(addresses[1]).to.be.equal(address444.address);
 			console.log("percents is:",percents);
+			expect(percents[0]).to.be.equal(1500);
+			expect(percents[1]).to.be.equal(2500);
 
 		});
 
