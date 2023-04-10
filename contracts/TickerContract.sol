@@ -11,6 +11,9 @@ contract TickerContract is OwnableUpgradeable {
         // Add the library methods
     using EnumerableMap for EnumerableMap.AddressToUintMap;
 
+    uint256 public transThreshold = 50000;
+    uint256 public storeProfit = 0;
+
     // Declare a set state variable
     EnumerableMap.AddressToUintMap distributionMap;
 
@@ -57,7 +60,7 @@ contract TickerContract is OwnableUpgradeable {
     // //store the fee token
     // address public claimAccountAddress;
 
-    uint public rewardMul = 2; //reward mutiple
+    uint public rewardMul = 5; //reward mutiple
 
     // uint public tickerIndex  = 0;
 
@@ -113,16 +116,29 @@ contract TickerContract is OwnableUpgradeable {
         require(userTicker.payAmount==0,"ticker exists");
         require(tickerPayAmount>0,"fee too low!");
         payToken.transferFrom(buyer, address(this), tickerPayAmount);
-        // console.log("contract tickerPayAmount is:",tickerPayAmount);
-        for(uint256 i = 0; i < distributionMap.length(); i++){
-            (address distributeAddress,uint256 percent) = distributionMap.at(i);
-            // console.log("contract percent is:",percent);
-            payToken.transfer(distributeAddress, tickerPayAmount*percent/base);
+        storeProfit += tickerPayAmount;
+        // if receive user money big than threshold. send the pay token to distribute address and set the storeProfit is zero. 
+        if (storeProfit>transThreshold*(10**payToken.decimals())){
+            for(uint256 i = 0; i < distributionMap.length(); i++){
+                (address distributeAddress,uint256 percent) = distributionMap.at(i);
+                // console.log("contract percent is:",percent);
+                payToken.transfer(distributeAddress, storeProfit*percent/base);
+            }
+            storeProfit = 0;
         }
 
         Ticker memory ticker = Ticker(buyer,minerLevel, tickerPayAmount,false,multiple,profitToken);
         userTickMap[buyer][tickerIndex]=ticker;
         emit TickerBuy(buyer,minerLevel, tickerPayAmount,multiple,tickerIndex,profitToken);
+    }
+
+    function emergencyDistribute() public onlyManager {
+        for(uint256 i = 0; i < distributionMap.length(); i++){
+            (address distributeAddress,uint256 percent) = distributionMap.at(i);
+            // console.log("contract percent is:",percent);
+            payToken.transfer(distributeAddress, storeProfit*percent/base);
+        }
+        storeProfit = 0;
     }
 
     // this method only called by manager。 If anyone calle this method is very dangerous
@@ -159,6 +175,10 @@ contract TickerContract is OwnableUpgradeable {
 
     function setTickerRewardAccount(address _tickerRewardAccount) public onlyManager {
         tickerRewardAccount = _tickerRewardAccount;
+    }
+
+    function setThreshold(uint256 _transThreshold) public onlyManager {
+        transThreshold = _transThreshold;
     }
 
     

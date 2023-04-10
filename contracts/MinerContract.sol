@@ -5,9 +5,15 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./interfaces/IERC20.sol";
 import "./TickerContract.sol";
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract MinerContract is OwnableUpgradeable {
+
+
+    uint public transThreshold = 200000;
+    uint256 public storeClaimFeeProfit = 0;
+    uint256 public storePledageProfit = 0;
+    
 
         // Add the library methods
     using EnumerableMap for EnumerableMap.AddressToUintMap;
@@ -170,6 +176,15 @@ contract MinerContract is OwnableUpgradeable {
     }
 
 
+    function emergencyClaimFeeDistribute() public onlyManager {
+        for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
+            (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
+            // console.log("contract claim percent is:",percent);
+            reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+        }
+        storeClaimFeeProfit = 0;
+    }
+
     function claimProfit(address userAddress,uint tickerIndex,uint claimAmount,uint claimFeeAmount)public onlyManager{
         
         Miner storage miner = userMinerMap[userAddress][tickerIndex];
@@ -188,11 +203,14 @@ contract MinerContract is OwnableUpgradeable {
         // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
         require(claimFeeAmount>0,"fee too low!");
         reaToken.transferFrom(userAddress, address(this), claimFeeAmount);
-        // console.log("contract claim claimFeeAmount is:",claimFeeAmount);
-        for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
-            (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
-            // console.log("contract claim percent is:",percent);
-            reaToken.transfer(distributeAddress, claimFeeAmount*percent/base);
+        storeClaimFeeProfit += claimFeeAmount;
+        if (storeClaimFeeProfit>transThreshold*(10**reaToken.decimals())){
+            for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
+                (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
+                // console.log("contract claim percent is:",percent);
+                reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+            }
+            storeClaimFeeProfit = 0;
         }
 
         if (claimRewardAmount >= profitAmount){
@@ -236,6 +254,15 @@ contract MinerContract is OwnableUpgradeable {
         bool isExit;             //is exit
     }
 
+    function emergencyPledgeDistribute() public onlyManager {
+        for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
+            (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
+            // console.log("contract claim percent is:",percent);
+            reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+        }
+        storePledageProfit = 0;
+    }
+
     //pledge the miner
     function pledgeMiner(
         address buyer,
@@ -257,16 +284,16 @@ contract MinerContract is OwnableUpgradeable {
         //receive user money
         require(payAmount>0,"fee too low!");
         reaToken.transferFrom(buyer, address(this), payAmount);
-        // console.log("contract pledge payAmount is:",payAmount);
-        for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
-            (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
-            // console.log("contract pledge percent is:",percent);
-            reaToken.transfer(distributeAddress, payAmount*percent/base);
+        storePledageProfit += payAmount;
+        console.log("storeClaimFeeProfit is:",storePledageProfit);
+        if (storePledageProfit>transThreshold*(10**reaToken.decimals())){
+            for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
+                (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
+                // console.log("contract pledge percent is:",percent);
+                reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+            }
+            storePledageProfit = 0;
         }
-        // reaToken.transfer(blackholeAddress, payAmount*blackHolePercent/base);
-        // reaToken.transfer(ecologyAddress, payAmount*ecologyPercent/base);
-        // reaToken.transfer(teamRewardAddress, payAmount*teamRewardPercent/base);
-
         if (usdtAmount > 0) {
             usdtToken.transferFrom(buyer, storeUsdtAddress, usdtAmount);
         }
@@ -358,5 +385,9 @@ contract MinerContract is OwnableUpgradeable {
 
     function setTickerContract(address _tickerContract) public onlyManager {
         tickerContract = TickerContract(_tickerContract);
+    }
+
+    function setThreshold(uint _transThreshold) public onlyManager {
+        transThreshold = _transThreshold;
     }
 }

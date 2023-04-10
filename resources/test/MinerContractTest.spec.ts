@@ -125,7 +125,7 @@ describe("Miner contract init and test", () => {
 		const minerReaUsdtAmount = expandTo18Decimals(80);
 		const minerUsdtAmount = expandTo18Decimals(120);
 		const claimAmount = expandTo18Decimals(10);
-		const drawFeeOfUsdt = expandTo18Decimals(3)
+		const drawFeeOfUsdt = BigNumber.from(300);
 		const base = 10000;
 		// const swapAmount = expandTo18Decimals(1);
 		// const expectedOutputAmount = BigNumber.from("1662497915624478906");
@@ -260,7 +260,85 @@ describe("Miner contract init and test", () => {
 
 
 
+		it("buy miner delivery threshold", async () => {
+			const { 
+				wallet,
+				user,
+				profitProductAccount,
+				usdtToken,
+				fil,
+				reaToken,
+				tickerContract,
+				minerContract,
+				address1,
+				address2,
+				address3,
+				address4,
+				address5,
+				address6,
+				address11,
+				address22,
+				address33,
+				address44,
+				address55,
+				address66,
+			} = await loadFixture(
+				v2Fixture
+			);
+			let tickerIndex = 1;
+			await reaToken.mint(wallet.address, token0Amount);
+			let reaTokenDecimal = await reaToken.decimals();
+			console.log("reaTokenDecimal", reaTokenDecimal);
+			await usdtToken.mint(wallet.address, token1Amount);
+			let usdtDecimal = await usdtToken.decimals();
+			console.log("usdtDecimal", usdtDecimal);
+			let tickerPayAmount = BigNumber.from(10000);
+			let minerReaAmount = minerReaUsdtAmount;
+			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
+			console.log("payAmount is:{}", minerReaAmount);
+			let profitToken = fil.address;
+			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex, 1, tickerPayAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
+			await reaToken.mint(user.address, tickerPayAmount);
+			let balanceOfUser = await reaToken.balanceOf(user.address);
+			console.log("balanceOfUser is:", balanceOfUser);
+			await reaToken.connect(user).approve(tickerContract.address, tickerPayAmount, { from: user.address });
+			await tickerContract.setManager(user.address, true);
+			let minerLevel = 1;
+			let multiple = 3;
+			console.log("buyTickerReaAmount is:",tickerPayAmount);
+			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
+			let transThreshold = await tickerContract.transThreshold();
+			let thresholdAmount = transThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			await tickerContract.emergencyDistribute();
+			var [addresses,percents] = await tickerContract.getDisributeAddresses();
+			
+			expect(tickerPayAmount).to.be.below(thresholdAmount);
+			console.log("addresses is:",addresses);
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
 
+
+
+
+			let tickerPayAmount2 = thresholdAmount;
+
+			await reaToken.mint(user.address, tickerPayAmount2.mul(5000));
+			await reaToken.connect(user).approve(tickerContract.address, tickerPayAmount2.mul(5000), { from: user.address });
+			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+1, minerLevel, tickerPayAmount2, multiple, profitToken, { from: user.address });
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
+			let tickerPayAmount3 = BigNumber.from(500);
+			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+2, minerLevel, tickerPayAmount3, multiple, profitToken, { from: user.address });
+			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
+			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[0]).div(10000));
+			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[1]).div(10000));
+			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[2]).div(10000));
+			expect((await reaToken.balanceOf(addresses[3]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[3]).div(10000));
+		});
 
 
 		it("pledge miner", async () => {
@@ -295,21 +373,34 @@ describe("Miner contract init and test", () => {
 			await usdtToken.mint(wallet.address, token1Amount);
 			let usdtDecimal = await usdtToken.decimals();
 			console.log("usdtDecimal", usdtDecimal);
-			let pledgeMinerReaAmount = BigNumber.from(10000);
+			let tickerPayAmount = BigNumber.from(10000);
 			let minerReaAmount = minerReaUsdtAmount;
 			// let payAmount = await oracle.consult(usdt.address,tickerPayAmount);
 			console.log("payAmount is:{}", minerReaAmount);
 			let profitToken = fil.address;
-			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex, 1, pledgeMinerReaAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
-			await reaToken.mint(user.address, pledgeMinerReaAmount);
+			await expect(tickerContract.connect(user).buyTicker(user.address,tickerIndex, 1, tickerPayAmount, 3, profitToken, { from: user.address })).to.be.revertedWith("Not manager");
+			await reaToken.mint(user.address, tickerPayAmount);
 			let balanceOfUser = await reaToken.balanceOf(user.address);
 			console.log("balanceOfUser is:", balanceOfUser);
-			await reaToken.connect(user).approve(tickerContract.address, pledgeMinerReaAmount, { from: user.address });
+			await reaToken.connect(user).approve(tickerContract.address, tickerPayAmount, { from: user.address });
 			await tickerContract.setManager(user.address, true);
 			let minerLevel = 1;
 			let multiple = 3;
-			console.log("buyTickerReaAmount is:",pledgeMinerReaAmount);
-			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex, minerLevel, pledgeMinerReaAmount, multiple, profitToken, { from: user.address });
+			console.log("buyTickerReaAmount is:",tickerPayAmount);
+			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
+			let transThreshold = await tickerContract.transThreshold();
+
+
+			var [addresses,percents] = await tickerContract.getDisributeAddresses();
+			
+			expect(tickerPayAmount).to.be.below(transThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals())));
+			console.log("addresses is:",addresses);
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(BigNumber.from(0));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(BigNumber.from(0));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(BigNumber.from(0));
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(BigNumber.from(0));
+
+
 			let receipt = await tx.wait();
 			console.log("token0Amount is:", token0Amount);
 			expect(await reaToken.balanceOf(user.address)).to.be.equal(0);
@@ -330,7 +421,7 @@ describe("Miner contract init and test", () => {
 			expect(tickerBuyEvent?.event).to.be.equal("TickerBuy");
 			expect(tickerBuyEvent?.args?.buyer).to.be.equal(user.address);
 			expect(tickerBuyEvent?.args?.minerLevel).to.be.equal(minerLevel);
-			expect(tickerBuyEvent?.args?.payAmount).to.be.equal(pledgeMinerReaAmount);
+			expect(tickerBuyEvent?.args?.payAmount).to.be.equal(tickerPayAmount);
 			expect(tickerBuyEvent?.args?.multiple).to.be.equal(multiple);
 			expect(tickerBuyEvent?.args?.index).to.be.equal(tickerIndex);
 			expect(tickerBuyEvent?.args?.profitToken).to.be.equal(profitToken);
@@ -360,27 +451,71 @@ describe("Miner contract init and test", () => {
 			
 			await reaToken.mint(user.address,minerReaAmount);
 			await reaToken.connect(user).approve(minerContract.address,minerReaAmount,{from:user.address});
-			await usdtToken.mint(user.address,minerUsdtAmount);
-			await usdtToken.connect(user).approve(minerContract.address,minerUsdtAmount,{from:user.address});
+			await usdtToken.mint(user.address,minerUsdtAmount.mul(500));
+			await usdtToken.connect(user).approve(minerContract.address,minerUsdtAmount.mul(500),{from:user.address});
 
 
-
-
+			await reaToken.connect(user).approve(tickerContract.address, tickerPayAmount.mul(500), { from: user.address });
+			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+1, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
+			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+2, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
+			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+3, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
 			let pledgeTx = await minerContract.connect(user)
-				.pledgeMiner(user.address, tickerIndex, pledgeMinerReaAmount, minerUsdtAmount, minerProfitAmount, { from: user.address });
+				.pledgeMiner(user.address, tickerIndex, tickerPayAmount, minerUsdtAmount, minerProfitAmount, { from: user.address });
 
-			// 3000,6000,1000,600,400
-			let address2Amount = await reaToken.balanceOf(address2.address);
-			console.log("address2Amount,buyTickerReaAmount is:",address2Amount,pledgeMinerReaAmount);
-			expect(address2Amount).to.be.equal(pledgeMinerReaAmount.mul(3000).div(base));
-			let address3Amount = await reaToken.balanceOf(address3.address);
-			expect(address3Amount).to.be.equal(pledgeMinerReaAmount.mul(6000).div(base));
-			let address4Amount = await reaToken.balanceOf(address4.address);
-			expect(address4Amount).to.be.equal(pledgeMinerReaAmount.mul(500).div(base));
-			let address5Amount = await reaToken.balanceOf(address5.address);
-			expect(address5Amount).to.be.equal(pledgeMinerReaAmount.mul(300).div(base));
-			let address6Amount = await reaToken.balanceOf(address6.address);
-			expect(address6Amount).to.be.equal(pledgeMinerReaAmount.mul(200).div(base));
+			
+
+
+			var [addresses,percents] = await minerContract.getDepositFeeMap();
+
+			// start cal the pledge fee
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[4])).to.be.equal(0);
+
+			let minerTransThreshold = await minerContract.transThreshold();
+			let minerThresholdAmount = minerTransThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			await minerContract.emergencyPledgeDistribute();
+			
+			
+			expect(tickerPayAmount).to.be.below(minerThresholdAmount);
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
+			expect(await reaToken.balanceOf(addresses[4])).to.be.equal(tickerPayAmount.mul(percents[4]).div(10000));
+
+
+			let tickerPayAmount2 = minerThresholdAmount;
+			console.log("tickerPayAmount2 is",tickerPayAmount2);
+			await reaToken.mint(user.address, tickerPayAmount2.mul(500000));
+			await reaToken.connect(user).approve(minerContract.address, tickerPayAmount2.mul(500000), { from: user.address });
+			console.log("----------------------------11111");
+			await minerContract.connect(user)
+				.pledgeMiner(user.address, tickerIndex+1, tickerPayAmount2, minerUsdtAmount, minerProfitAmount, { from: user.address });
+				console.log("----------------------------2222");
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
+			let tickerPayAmount3 = BigNumber.from(1);
+			await minerContract.connect(user)
+				.pledgeMiner(user.address, tickerIndex+2, tickerPayAmount3, minerUsdtAmount, minerProfitAmount, { from: user.address });
+
+			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
+			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[0]).div(10000));
+			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[1]).div(10000));
+			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[2]).div(10000));
+			expect((await reaToken.balanceOf(addresses[3]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[3]).div(10000));
+
+
+
+
+
+
+
+
 
 			let pledgeReceipt = await pledgeTx.wait();
 			await expect(minerContract.connect(user)
@@ -396,7 +531,7 @@ describe("Miner contract init and test", () => {
 			
 			let storeUsdtAddress = await minerContract.storeUsdtAddress();
 			let balanceOfUsdtClaim = await usdtToken.balanceOf(storeUsdtAddress);
-			expect(balanceOfUsdtClaim).to.be.equal(minerUsdtAmount);
+			expect(balanceOfUsdtClaim).to.be.equal(minerUsdtAmount.mul(3));
 
 			// let minerIndex = await minerContract.minerIndex();
 			let expectMinerIndex = 1;
@@ -409,7 +544,7 @@ describe("Miner contract init and test", () => {
 			expect(miner.multiple).to.be.equal(multiple);
 			//calculate the profit
 			expect(miner.profitAmount).to.be.equal(minerProfitAmount);
-			expect(miner.payAmount).to.be.equal(pledgeMinerReaAmount);
+			expect(miner.payAmount).to.be.equal(tickerPayAmount);
 			expect(miner.usdtAmount).to.be.equal(minerUsdtAmount);
 			expect(miner.profitToken).to.be.equal(profitToken);
 			expect(miner.claimRewardAmount).to.be.equal(0);
@@ -426,7 +561,7 @@ describe("Miner contract init and test", () => {
 			expect(pledgeMinerEvent?.args?.level).to.be.equal(minerLevel);
 			expect(pledgeMinerEvent?.args?.multiple).to.be.equal(multiple);
 			expect(pledgeMinerEvent?.args?.profitAmount).to.be.equal(minerProfitAmount);
-			expect(pledgeMinerEvent?.args?.payAmount).to.be.equal(pledgeMinerReaAmount);
+			expect(pledgeMinerEvent?.args?.payAmount).to.be.equal(tickerPayAmount);
 			expect(pledgeMinerEvent?.args?.usdtAmount).to.be.equal(minerUsdtAmount);
 			expect(pledgeMinerEvent?.args?.profitToken).to.be.equal(profitToken);
 			// start claimProfit
@@ -464,8 +599,8 @@ describe("Miner contract init and test", () => {
 			// 	.to.be.revertedWith("ERC20: insufficient allowance");
 			
 			
-			await fil.mint(profitProductAccount.address,claimAmount);
-			await fil.connect(profitProductAccount).approve(minerContract.address,claimAmount,{from:profitProductAccount.address});
+			await fil.mint(profitProductAccount.address,claimAmount.mul(1000));
+			await fil.connect(profitProductAccount).approve(minerContract.address,claimAmount.mul(1000),{from:profitProductAccount.address});
 			let claimTx = await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,drawFeeOfUsdt,{from: user.address});
 			
 
@@ -477,19 +612,60 @@ describe("Miner contract init and test", () => {
 			// expect(await reaToken.balanceOf(claimAccountAddress)).to.be.equal(balanceOfClaimAccountAddress.add(drawFeeOfUsdt));
 
 
-			let address44Amount = await reaToken.balanceOf(address44.address);
-			expect(address44Amount).to.be.equal(drawFeeOfUsdt.mul(5000).div(base));
-			let address55Amount = await reaToken.balanceOf(address55.address);
-			expect(address55Amount).to.be.equal(drawFeeOfUsdt.mul(3000).div(base));
-			let address66Amount = await reaToken.balanceOf(address66.address);
-			expect(address66Amount).to.be.equal(drawFeeOfUsdt.mul(2000).div(base));
+
+
+
+
+			// [address44.address,address55.address,address66.address],
+			// [5000,3000,2000],
+			var [addresses,percents] = await minerContract.getClaimFeeMap();
+
+			
+
+			// start cal the pledge fee
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(0);
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(0);
+
+			// let minerTransThreshold = await minerContract.transThreshold();
+			// let minerThresholdAmount = minerTransThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			await minerContract.emergencyClaimFeeDistribute();
+			
+			
+			expect(drawFeeOfUsdt).to.be.below(minerThresholdAmount);
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(drawFeeOfUsdt.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(drawFeeOfUsdt.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(drawFeeOfUsdt.mul(percents[2]).div(10000));
+
+
+			tickerPayAmount2 = minerThresholdAmount;
+			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,tickerPayAmount2,{from: user.address});
+
+
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(drawFeeOfUsdt.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(drawFeeOfUsdt.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(drawFeeOfUsdt.mul(percents[2]).div(10000));
+			tickerPayAmount3 = BigNumber.from(1);
+			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,tickerPayAmount3,{from: user.address});
+
+			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
+			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[0]).div(10000));
+			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[1]).div(10000));
+			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[2]).div(10000));
+
+
+
+
+
+
+
 
 			
 
 
 			expect(miner.isExit).to.be.false;
-			expect(await fil.balanceOf(user.address)).to.be.equal(claimAmount);
-			expect(await fil.balanceOf(profitProductAccount.address)).to.be.equal(0);
+			expect(await fil.balanceOf(user.address)).to.be.equal(claimAmount.mul(3));
+			// expect(await fil.balanceOf(profitProductAccount.address)).to.be.equal(0);
 
 			let claimReceipt = await claimTx.wait();
 
