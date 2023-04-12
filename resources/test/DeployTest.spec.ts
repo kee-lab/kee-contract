@@ -22,7 +22,7 @@ const baseRatio = 100;
 	async ()=>{
 		const ReaToken = await ethers.getContractFactory("ReaToken");
 		const reaToken = await ReaToken.deploy();
-		await reaToken.initialize("REA token", "REA");
+		// await reaToken.initialize("REA token", "REA");
 
 		
 
@@ -60,7 +60,7 @@ const baseRatio = 100;
 
 		const TickContract = await ethers.getContractFactory("TickerContract");
 		const tickerContract = await TickContract.deploy();
-		await tickerContract.initialize(reaToken.address, tickerRewardAccount, claimAccount);
+		// await tickerContract.initialize(reaToken.address, tickerRewardAccount, claimAccount);
 
 		const MinerContract = await ethers.getContractFactory("MinerContract");
 		const minerContract = await MinerContract.deploy();

@@ -1,32 +1,56 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-contract ReaToken is ERC20Upgradeable, OwnableUpgradeable {
-    mapping(address => bool) public isManager;
-    event SetManager(address manager, bool flag);
-    function initialize(string memory name, string memory symbol) public initializer {
-        __Ownable_init();
-        __ERC20_init(name, symbol);
-        setManager(_msgSender(),true);
+contract ReaToken is ERC20Burnable {
+
+    function isOwner() public view returns (bool) {
+
+        return _msgSender() == _owner;
+
     }
 
-    function setManager(address manager, bool flag) public onlyOwner {
-        isManager[manager] = flag;
-        emit SetManager(manager, flag);
+    modifier onlyOwner() {
+
+        require(isOwner(), "Ownable: caller is not the owner");
+
+        _;
+
     }
+    // mapping(address => bool) public isManager;
+    // event SetManager(address manager, bool flag);
+    address private _owner;
+
+    constructor() ERC20("REA Token", "REA") {}
+    
+    // function initialize(string memory name, string memory symbol) public{
+    //     address msgSender = _msgSender();
+    //     _owner = msgSender;
+    //     __ERC20_init(name, symbol);
+    //     // setManager(_msgSender(),true);
+    // }
+
+    // function setManager(address manager, bool flag) public onlyOwner {
+    //     isManager[manager] = flag;
+    //     emit SetManager(manager, flag);
+    // }
     
 
-    function getManager(address manager) public view returns (bool) {
-        return isManager[manager];
-    }
+    // function getManager(address manager) public view returns (bool) {
+    //     return isManager[manager];
+    // }
 
-    function mint(address _toAddress,uint256 _mintNum) public onlyOwner {
+    function mint(address _toAddress,uint256 _mintNum)public {
         _mint(_toAddress, _mintNum);
     }
+
+    // function burn(uint256 _burnAmount) public onlyOwner {
+    //     _burn(_msgSender(), _burnAmount);
+    // }
 
     function decimals() public view virtual override returns (uint8) {
         return 6;

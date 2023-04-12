@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import "./interfaces/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "./TickerContract.sol";
-import "hardhat/console.sol";
 
 contract MinerContract is OwnableUpgradeable {
 
@@ -83,33 +82,20 @@ contract MinerContract is OwnableUpgradeable {
         }
     }
     // ----- end adddepoistfeemap
-
     function setIsSendProfit(bool _isSendProfit) public onlyManager {
         isSendProfit = _isSendProfit;
     }
 
-    IERC20 public reaToken; // is REA token to buy the ticker
+    ERC20Burnable public reaToken; // is REA token to buy the ticker
     IERC20 public usdtToken;
     TickerContract public tickerContract;
     mapping(address => bool) public isManager;
-    // address public blackholeAddress;    // blackhole address
-    // uint256 public blackHolePercent;    // blackhole percent
-    // address public ecologyAddress;
-    // uint256 public ecologyPercent;
-    // address public teamRewardAddress;
-    // uint256 public teamRewardPercent;
     uint public base=10000;   //  base 
-    //store the fee token
-    // address public claimAccountAddress;
     //store the usdt token
     address public storeUsdtAddress;
     // the profit product account
     address public profitProductAccount;
     mapping(address => mapping(uint256 => Miner)) public userMinerMap;
-
-    // mapping(address => mapping(uint256 => uint)) public userClaimProfileMap;    //user=>miner=>profit amount
-
-    // mapping(uint=>uint) public levelFeeMapping; // level to fee mapping
 
     bool public isSendProfit = true;
 
@@ -126,20 +112,13 @@ contract MinerContract is OwnableUpgradeable {
         uint256[] memory depositFeePercent,
         address[] memory claimFeeAddresses,
         uint256[] memory calimFeePercent,
-        // address _blackholeAddress,
-        // uint256 _blackHolePercent,
-        // address _ecologyAddress,
-        // uint256 _ecologyPercent,
-        // address _teamRewardAddress,
-        // uint256 _teamRewardPercent,
-        // address _claimAccountAddress,
         address _tickerContractAddress,
         address _storeUsdtAddress,
         address _profitProductAccount,
         bool _isSendProfit
     ) public initializer {
         isSendProfit = _isSendProfit;
-        reaToken = IERC20(_reaToken);
+        reaToken = ERC20Burnable(_reaToken);
         usdtToken = IERC20(_usdtToken);
 
         uint256 depositAddressLength = depositFeeAddresses.length;
@@ -156,20 +135,8 @@ contract MinerContract is OwnableUpgradeable {
             claimFeeDisMap.set(claimFeeAddresses[i],calimFeePercent[i]);
         }
 
-        // blackholeAddress = _blackholeAddress;
-        // blackHolePercent = _blackHolePercent;
-        // ecologyAddress = _ecologyAddress;
-        // ecologyPercent = _ecologyPercent;
-        // teamRewardAddress = _teamRewardAddress;
-        // teamRewardPercent = _teamRewardPercent;
         __Ownable_init();
         isManager[msg.sender] = true;
-        // levelFeeMapping[1] = 2; 
-        // levelFeeMapping[2] = 4;
-        // levelFeeMapping[3] = 6; 
-        // levelFeeMapping[4] = 10; 
-        // levelFeeMapping[5] = 20; 
-        // claimAccountAddress = _claimAccountAddress;
         tickerContract = TickerContract(_tickerContractAddress);
         storeUsdtAddress = _storeUsdtAddress;
         profitProductAccount = _profitProductAccount;
@@ -179,8 +146,11 @@ contract MinerContract is OwnableUpgradeable {
     function emergencyClaimFeeDistribute() public onlyManager {
         for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
             (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
-            // console.log("contract claim percent is:",percent);
-            reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+            if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                reaToken.burn(storeClaimFeeProfit*percent/base);
+            }else{
+                reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+            }
         }
         storeClaimFeeProfit = 0;
     }
@@ -196,30 +166,30 @@ contract MinerContract is OwnableUpgradeable {
         claimRewardAmount += claimAmount;
         miner.claimRewardAmount = claimRewardAmount;
         // not limit the profitAmount
-        // require(claimRewardAmount<=profitAmount,"claim amount too high"); 
 
         //receive the fee
         uint minerLevel = miner.level;
-        // uint drawFee = levelFeeMapping[minerLevel]*(10**reaToken.decimals());
         require(claimFeeAmount>0,"fee too low!");
         reaToken.transferFrom(userAddress, address(this), claimFeeAmount);
         storeClaimFeeProfit += claimFeeAmount;
         if (storeClaimFeeProfit>transThreshold*(10**reaToken.decimals())){
             for(uint256 i = 0; i < claimFeeDisMap.length(); i++){
                 (address distributeAddress,uint256 percent) = claimFeeDisMap.at(i);
-                // console.log("contract claim percent is:",percent);
-                reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+                if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                    reaToken.burn(storeClaimFeeProfit*percent/base);
+                }else{
+                    reaToken.transfer(distributeAddress, storeClaimFeeProfit*percent/base);
+                }
+                
             }
             storeClaimFeeProfit = 0;
         }
 
         if (claimRewardAmount >= profitAmount){
-            // console.log("is exit,claimRewardAmount,profitAmount",claimRewardAmount,profitAmount);
             // this miner exit
             miner.isExit = true;
         }
         // Increase the transfer amount of the mining machine and withdraw it to the user. Send withdrawal event
-        
         IERC20 profileToken = IERC20(miner.profitToken);
         if(isSendProfit){
             // transfer profit to user
@@ -257,8 +227,12 @@ contract MinerContract is OwnableUpgradeable {
     function emergencyPledgeDistribute() public onlyManager {
         for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
             (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
-            // console.log("contract claim percent is:",percent);
-            reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+            if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                reaToken.burn(storePledageProfit*percent/base);
+            }else{
+                reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+            }
+            
         }
         storePledageProfit = 0;
     }
@@ -285,12 +259,14 @@ contract MinerContract is OwnableUpgradeable {
         require(payAmount>0,"fee too low!");
         reaToken.transferFrom(buyer, address(this), payAmount);
         storePledageProfit += payAmount;
-        console.log("storeClaimFeeProfit is:",storePledageProfit);
         if (storePledageProfit>transThreshold*(10**reaToken.decimals())){
             for(uint256 i = 0; i < depositFeeDisMap.length(); i++){
                 (address distributeAddress,uint256 percent) = depositFeeDisMap.at(i);
-                // console.log("contract pledge percent is:",percent);
-                reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+                if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                    reaToken.burn(storePledageProfit*percent/base);
+                }else{
+                    reaToken.transfer(distributeAddress, storePledageProfit*percent/base);
+                }
             }
             storePledageProfit = 0;
         }
@@ -333,47 +309,6 @@ contract MinerContract is OwnableUpgradeable {
     function setManager(address _manager, bool _flag) public onlyOwner {
         isManager[_manager] = _flag;
     }
-
-    // function setBloackHoleAddress(address _blackholeAddress)
-    //     public
-    //     onlyManager
-    // {
-    //     blackholeAddress = _blackholeAddress;
-    // }
-
-    // function setEcologyAddress(address _ecologyAddress) public onlyManager {
-    //     ecologyAddress = _ecologyAddress;
-    // }
-
-    // function setTeamRewardAddress(address _teamRewardAddress)
-    //     public
-    //     onlyManager
-    // {
-    //     teamRewardAddress = _teamRewardAddress;
-    // }
-
-    // function setBlackHolePercent(uint256 _blackHolePercent) public onlyManager {
-    //     blackHolePercent = _blackHolePercent;
-    // }
-
-    // function setEcologyPercent(uint256 _ecologyPercent) public onlyManager {
-    //     ecologyPercent = _ecologyPercent;
-    // }
-
-    // function setLevelFee(uint level,uint fee) public onlyManager {
-    //     levelFeeMapping[level]=fee;
-    // }
-
-    // function setTeamRewardPercent(uint256 _teamRewardPercent)
-    //     public
-    //     onlyManager
-    // {
-    //     teamRewardPercent = _teamRewardPercent;
-    // }
-
-    // function setClaimAccountAddress(address _claimAccountAddress) public onlyManager {
-    //     claimAccountAddress = _claimAccountAddress;
-    // }
 
     function setStoreUsdtAddress(address _storeUsdtAddress) public onlyManager {
         storeUsdtAddress = _storeUsdtAddress;

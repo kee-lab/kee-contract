@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import "./interfaces/IERC20.sol";
-// import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract TickerContract is OwnableUpgradeable {
 
@@ -49,7 +48,7 @@ contract TickerContract is OwnableUpgradeable {
 
     uint public base=10000;   //  base 
 
-    IERC20 public payToken; // is REA token to buy the ticker
+    ERC20Burnable public payToken; // is REA token to buy the ticker
     mapping(address => bool) public isManager;
 
     mapping(address => mapping(uint256 => Ticker)) public userTickMap;
@@ -80,7 +79,7 @@ contract TickerContract is OwnableUpgradeable {
         }
 
 
-        payToken = IERC20(_payToken);
+        payToken = ERC20Burnable(_payToken);
         tickerRewardAccount=_tickerRewardAccount;
         // claimAccountAddress = _claimAccountAddress;
         __Ownable_init();
@@ -121,8 +120,11 @@ contract TickerContract is OwnableUpgradeable {
         if (storeProfit>transThreshold*(10**payToken.decimals())){
             for(uint256 i = 0; i < distributionMap.length(); i++){
                 (address distributeAddress,uint256 percent) = distributionMap.at(i);
-                // console.log("contract percent is:",percent);
-                payToken.transfer(distributeAddress, storeProfit*percent/base);
+                if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                    payToken.burn(storeProfit*percent/base);
+                }else{
+                    payToken.transfer(distributeAddress, storeProfit*percent/base);
+                }
             }
             storeProfit = 0;
         }
@@ -135,8 +137,11 @@ contract TickerContract is OwnableUpgradeable {
     function emergencyDistribute() public onlyManager {
         for(uint256 i = 0; i < distributionMap.length(); i++){
             (address distributeAddress,uint256 percent) = distributionMap.at(i);
-            // console.log("contract percent is:",percent);
-            payToken.transfer(distributeAddress, storeProfit*percent/base);
+            if(distributeAddress==address(0x4100000000000000000000000000000000000001)){
+                payToken.burn(storeProfit*percent/base);
+            }else{
+                payToken.transfer(distributeAddress, storeProfit*percent/base);
+            }
         }
         storeProfit = 0;
     }

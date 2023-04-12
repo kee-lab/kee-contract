@@ -27,13 +27,13 @@ describe("Miner contract init and test", () => {
 	);
 
 	async function v2Fixture([wallet, user,  
-		address1,address2,address3,address4,address5,address6, 
-		address111,address444,address555,address666, 
-		address11,address22,address33,address44,address55,address66, 
+		address1,address2,address3,address5,address6, 
+		address111,address555,address666, 
+		address11,address22,address33,address55,address66, 
 		storeUsdtAccount,profitProductAccount]: Wallet[], provider: MockProvider) {
 		const ReaToken = await ethers.getContractFactory("ReaToken");
 		const reaToken = await ReaToken.deploy();
-		await reaToken.initialize("REA token", "REA");
+		// await reaToken.initialize("REA token", "REA");
 
 		console.log("init read token!");
 
@@ -68,9 +68,12 @@ describe("Miner contract init and test", () => {
 
 		const TickContract = await ethers.getContractFactory("TickerContract");
 		const tickerContract = await TickContract.deploy();
+		const address444 = "0x4100000000000000000000000000000000000001";
+		const address4 = "0x4100000000000000000000000000000000000001";
+		const address44 = "0x4100000000000000000000000000000000000001";
 		
 		await tickerContract.initialize(reaToken.address,address111.address,
-			[address111.address,address444.address,address555.address,address666.address],
+			[address111.address,address444,address555.address,address666.address],
 			[5000,2500,1500,1000]);
 
 		const MinerContract = await ethers.getContractFactory("MinerContract");
@@ -82,9 +85,9 @@ describe("Miner contract init and test", () => {
         // address[] memory depositFeeAddresses,uint256[] memory depositFeePercent,address _tickerContractAddress,
         // address _storeUsdtAddress,address _profitProductAccount,bool _isSendProfit
 		await minerContract.initialize(reaToken.address, usdtToken.address, 
-			[address2.address,address3.address,address4.address,address5.address,address6.address],
+			[address2.address,address3.address,address4,address5.address,address6.address],
 			[3000,6000,500,300,200], 
-			[address44.address,address55.address,address66.address],
+			[address44,address55.address,address66.address],
 			[5000,3000,2000],
 			tickerContract.address,
 			storeUsdtAccount.address,profitProductAccount.address,true);
@@ -154,7 +157,7 @@ describe("Miner contract init and test", () => {
 			var [addresses,percents] = await tickerContract.getDisributeAddresses();
 			console.log("addresses is:",addresses);
 			expect(addresses[0]).to.be.equal(address111.address);
-			expect(addresses[1]).to.be.equal(address444.address);
+			expect(addresses[1]).to.be.equal(address444);
 			expect(addresses[2]).to.be.equal(address555.address);
 			expect(addresses[3]).to.be.equal(address666.address);
 			console.log("percents is:",percents);
@@ -164,11 +167,11 @@ describe("Miner contract init and test", () => {
 			expect(percents[3]).to.be.equal(1000);
 			console.log("percents is:",percents);
 			console.log("---------------------");
-			await tickerContract.setDistributionMap([address555.address,address444.address],[1500,2500]);
+			await tickerContract.setDistributionMap([address555.address,address444],[1500,2500]);
 			var [addresses,percents] = await tickerContract.getDisributeAddresses();
 			console.log("addresses is:",addresses);
 			expect(addresses[0]).to.be.equal(address555.address);
-			expect(addresses[1]).to.be.equal(address444.address);
+			expect(addresses[1]).to.be.equal(address444);
 			console.log("percents is:",percents);
 			expect(percents[0]).to.be.equal(1500);
 			expect(percents[1]).to.be.equal(2500);
@@ -214,7 +217,7 @@ describe("Miner contract init and test", () => {
 
 			expect(addresses[0]).to.be.equal(address2.address);
 			expect(addresses[1]).to.be.equal(address3.address);
-			expect(addresses[2]).to.be.equal(address4.address);
+			expect(addresses[2]).to.be.equal(address4);
 			expect(addresses[3]).to.be.equal(address5.address);
 			expect(addresses[4]).to.be.equal(address6.address);
 			expect(percents[0]).to.be.equal(3000);
@@ -223,10 +226,10 @@ describe("Miner contract init and test", () => {
 			expect(percents[3]).to.be.equal(300);
 			expect(percents[4]).to.be.equal(200);
 
-			await minerContract.setDepositFeeMap([address555.address,address444.address],[1500,2500]);
+			await minerContract.setDepositFeeMap([address555.address,address444],[1500,2500]);
 			var [addresses,percents] = await minerContract.getDepositFeeMap();
 			expect(addresses[0]).to.be.equal(address555.address);
-			expect(addresses[1]).to.be.equal(address444.address);
+			expect(addresses[1]).to.be.equal(address444);
 			console.log("percents is:",percents);
 			expect(percents[0]).to.be.equal(1500);
 			expect(percents[1]).to.be.equal(2500);
@@ -237,7 +240,7 @@ describe("Miner contract init and test", () => {
 			// [5000,3000,2000],
 			var [addresses,percents] = await minerContract.getClaimFeeMap();
 			console.log("addresses is:",addresses);
-			expect(addresses[0]).to.be.equal(address44.address);
+			expect(addresses[0]).to.be.equal(address44);
 			expect(addresses[1]).to.be.equal(address55.address);
 			expect(addresses[2]).to.be.equal(address66.address);
 			console.log("percents is:",percents);
@@ -245,13 +248,13 @@ describe("Miner contract init and test", () => {
 			expect(percents[1]).to.be.equal(3000);
 			expect(percents[2]).to.be.equal(2000);
 			console.log("---------------------");
-			await minerContract.setClaimFeeMap([address555.address,address444.address],[1500,2500]);
+			await minerContract.setClaimFeeMap([address555.address,address444],[1500,2500]);
 			var [addresses,percents] = await minerContract.getClaimFeeMap();
 			console.log("addresses is:",addresses);
 			console.log("percents is:",percents);
 			console.log("---------------------");
 			expect(addresses[0]).to.be.equal(address555.address);
-			expect(addresses[1]).to.be.equal(address444.address);
+			expect(addresses[1]).to.be.equal(address444);
 			console.log("percents is:",percents);
 			expect(percents[0]).to.be.equal(1500);
 			expect(percents[1]).to.be.equal(2500);
@@ -306,16 +309,23 @@ describe("Miner contract init and test", () => {
 			let minerLevel = 1;
 			let multiple = 3;
 			console.log("buyTickerReaAmount is:",tickerPayAmount);
+			var [addresses,percents] = await tickerContract.getDisributeAddresses();
+			console.log("reaToken.balanceOf(addresses[1]:",await reaToken.balanceOf(addresses[1]));
+
 			let tx = await tickerContract.connect(user).buyTicker(user.address,tickerIndex, minerLevel, tickerPayAmount, multiple, profitToken, { from: user.address });
+			console.log("reaToken.balanceOf(addresses[1]:",await reaToken.balanceOf(addresses[1]));
 			let transThreshold = await tickerContract.transThreshold();
 			let thresholdAmount = transThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			let totalSupply1 = await reaToken.totalSupply();
 			await tickerContract.emergencyDistribute();
-			var [addresses,percents] = await tickerContract.getDisributeAddresses();
-			
+			console.log("reaToken.balanceOf(addresses[1]:",await reaToken.balanceOf(addresses[1]));
 			expect(tickerPayAmount).to.be.below(thresholdAmount);
+			let totalSupply2 = await reaToken.totalSupply();
+			let totalSupplySub = totalSupply1.sub(totalSupply2);
 			console.log("addresses is:",addresses);
+			expect(totalSupplySub).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
 			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
-			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
 			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
 
@@ -328,14 +338,19 @@ describe("Miner contract init and test", () => {
 			await reaToken.connect(user).approve(tickerContract.address, tickerPayAmount2.mul(5000), { from: user.address });
 			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+1, minerLevel, tickerPayAmount2, multiple, profitToken, { from: user.address });
 			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
-			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
+			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
 			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
 			let tickerPayAmount3 = BigNumber.from(500);
+
+			let minerTotalSupply1 = await reaToken.totalSupply();
 			await tickerContract.connect(user).buyTicker(user.address,tickerIndex+2, minerLevel, tickerPayAmount3, multiple, profitToken, { from: user.address });
+			let minerTotalSupply2 = minerTotalSupply1.sub(await reaToken.totalSupply());
+			expect(minerTotalSupply2).to.be.equal(tickerPayAmount2.add(tickerPayAmount3).mul(percents[1]).div(10000));
+
 			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
 			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[0]).div(10000));
-			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[1]).div(10000));
+			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(0);
 			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[2]).div(10000));
 			expect((await reaToken.balanceOf(addresses[3]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[3]).div(10000));
 		});
@@ -476,13 +491,15 @@ describe("Miner contract init and test", () => {
 
 			let minerTransThreshold = await minerContract.transThreshold();
 			let minerThresholdAmount = minerTransThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			let totalSupply3 = await reaToken.totalSupply();
 			await minerContract.emergencyPledgeDistribute();
-			
-			
+			let totalSupply4 = await reaToken.totalSupply();
+			let totalSupplySubMiner = totalSupply3.sub(totalSupply4);
+			expect(totalSupplySubMiner).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
 			expect(tickerPayAmount).to.be.below(minerThresholdAmount);
 			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
 			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
-			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
 			expect(await reaToken.balanceOf(addresses[4])).to.be.equal(tickerPayAmount.mul(percents[4]).div(10000));
 
@@ -497,17 +514,21 @@ describe("Miner contract init and test", () => {
 				console.log("----------------------------2222");
 			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(tickerPayAmount.mul(percents[0]).div(10000));
 			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(tickerPayAmount.mul(percents[1]).div(10000));
-			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(tickerPayAmount.mul(percents[2]).div(10000));
+			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[3])).to.be.equal(tickerPayAmount.mul(percents[3]).div(10000));
+			expect(await reaToken.balanceOf(addresses[4])).to.be.equal(tickerPayAmount.mul(percents[4]).div(10000));
 			let tickerPayAmount3 = BigNumber.from(1);
+			var pledgeTotalSupply4 = await reaToken.totalSupply();
 			await minerContract.connect(user)
 				.pledgeMiner(user.address, tickerIndex+2, tickerPayAmount3, minerUsdtAmount, minerProfitAmount, { from: user.address });
-
+			pledgeTotalSupply4 = pledgeTotalSupply4.sub(await reaToken.totalSupply());
+			expect(pledgeTotalSupply4).to.be.equal(tickerPayAmount2.add(tickerPayAmount3).mul(percents[2]).div(10000));
 			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
 			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[0]).div(10000));
 			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[1]).div(10000));
-			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[2]).div(10000));
+			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(0);
 			expect((await reaToken.balanceOf(addresses[3]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[3]).div(10000));
+			expect((await reaToken.balanceOf(addresses[4]))).to.be.equal(tickerPayAmount2.add(tickerPayAmount).add(tickerPayAmount3).mul(percents[4]).div(10000));
 
 
 
@@ -629,11 +650,12 @@ describe("Miner contract init and test", () => {
 
 			// let minerTransThreshold = await minerContract.transThreshold();
 			// let minerThresholdAmount = minerTransThreshold.mul(BigNumber.from(10).pow(await reaToken.decimals()));
+			var totalSupply = await reaToken.totalSupply();
 			await minerContract.emergencyClaimFeeDistribute();
-			
-			
+			totalSupply = totalSupply.sub(await reaToken.totalSupply());
+			expect(totalSupply).to.be.equal(drawFeeOfUsdt.mul(percents[0]).div(10000));
 			expect(drawFeeOfUsdt).to.be.below(minerThresholdAmount);
-			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(drawFeeOfUsdt.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(drawFeeOfUsdt.mul(percents[1]).div(10000));
 			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(drawFeeOfUsdt.mul(percents[2]).div(10000));
 
@@ -642,14 +664,16 @@ describe("Miner contract init and test", () => {
 			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,tickerPayAmount2,{from: user.address});
 
 
-			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(drawFeeOfUsdt.mul(percents[0]).div(10000));
+			expect(await reaToken.balanceOf(addresses[0])).to.be.equal(0);
 			expect(await reaToken.balanceOf(addresses[1])).to.be.equal(drawFeeOfUsdt.mul(percents[1]).div(10000));
 			expect(await reaToken.balanceOf(addresses[2])).to.be.equal(drawFeeOfUsdt.mul(percents[2]).div(10000));
 			tickerPayAmount3 = BigNumber.from(1);
+			var totalSupply = await reaToken.totalSupply();
 			await minerContract.connect(user).claimProfit(user.address,tickerIndex,claimAmount,tickerPayAmount3,{from: user.address});
-
+			totalSupply = totalSupply.sub(await reaToken.totalSupply());
+			expect(totalSupply).to.be.equal(tickerPayAmount2.add(tickerPayAmount3).mul(percents[0]).div(10000));
 			console.log("reaToken.balanceOf(addresses[0]) is",await reaToken.balanceOf(addresses[0]));
-			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[0]).div(10000));
+			expect((await reaToken.balanceOf(addresses[0]))).to.be.equal(0);
 			expect((await reaToken.balanceOf(addresses[1]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[1]).div(10000));
 			expect((await reaToken.balanceOf(addresses[2]))).to.be.equal(tickerPayAmount2.add(drawFeeOfUsdt).add(tickerPayAmount3).mul(percents[2]).div(10000));
 

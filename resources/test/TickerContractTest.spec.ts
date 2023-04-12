@@ -28,7 +28,7 @@ describe("Ticker contract init and test", () => {
 	async function v2Fixture([wallet, user,address1,address4,address5,address6]: Wallet[], provider: MockProvider) {
 		const ReaToken = await ethers.getContractFactory("ReaToken");
 		const reaToken = await ReaToken.deploy();
-		await reaToken.initialize("REA token","REA");
+		// await reaToken.initialize("REA token","REA");
 		
 		console.log("init read token!");
 
