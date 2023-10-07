@@ -2,16 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "./TickerContract.sol";
 
 contract FriendContract is OwnableUpgradeable {
     uint public DIV_NUM = 10000;
 
     uint public user_percent = 500;
     uint public platform_percent =500;
-    address public plateform_address;
+    address payable public plateform_address;
 
     //用户一定数量的eth购买另外一个朋友的share.需要eth的数量根据该用户所持的share数量决定.
     //price = k*k/10000 , k 为用户拥有的好友数.(用户拥有的share令牌的数量f)
@@ -32,47 +29,58 @@ contract FriendContract is OwnableUpgradeable {
         address buyer;
     }
 
-    event BuyUserEvent(
+    event BuyShareEvent(
         address buyer,
-        address seller,
+        address yourFriend,
+        uint256 price
+    );
+
+    event SellShareEvent(
+        address buyer,
+        address yourFriend,
         uint256 price
     );
 
     //用户好友的share.
-    function buyShare(address seller) public payable{
+    function buyShare(address payable yourFriend) public payable{
         uint buy = msg.value;
         //计算当前用户的share的价格
-        uint256 k = userFriendAmount[seller];
+        uint256 k = userFriendAmount[yourFriend];
         uint price = k*k/DIV_NUM;
         require(buy >= price,"not enough token");
         // 拥有该好友的share的数量增加一个。
-        userFriendAmount[seller] = userFriendAmount[seller] + 1;
+        userFriendAmount[yourFriend] = userFriendAmount[yourFriend] + 1;
         address buyer = msg.sender;
-        userFriends[seller][buyer] = true;
-        userShares[buyer][seller] = true;
+        userFriends[yourFriend][buyer] = true;
+        userShares[buyer][yourFriend] = true;
 
         //emit a event.
-        emit BuyUserEvent(buyer,seller,price);
+        emit BuyShareEvent(buyer,yourFriend,price);
 
         // 分配5%的金额给seller,5%的费用给平台.
         uint user_share = price*user_percent/10000;
         uint platform_share = price*platform_percent/10000;
-        seller.transfer(user_share);
+        yourFriend.transfer(user_share);
         //如果合约未初始化，是否可以进行转账。
-        plateform_address.transfer(plateform_share);
+        plateform_address.transfer(platform_share);
     }
 
     // TODO 用户卖出当前share
     function sellShare(address yourFriend)public{
-        address buyer = msg.sender;
+        address payable  buyer = payable(msg.sender);
         //确保用户有这个用户的share
-        require(userShares[buyer][seller],"no shares");
+        require(userShares[buyer][yourFriend],"no shares");
+        userShares[buyer][yourFriend] = false;
+        userFriends[yourFriend][buyer] = false;
         uint k = userFriendAmount[yourFriend]-1;
+        userFriendAmount[yourFriend] = userFriendAmount[yourFriend]-1;
         uint price = k*k/DIV_NUM;
         uint total_share = user_percent + platform_percent;
+        //卖出share所得的金额需要扣除手续费.注意,如果中途修改了比例,则手续费可能多扣.导致最后的退出者资金不足.
         uint total_fee = price * total_share / 10000;
         uint sell_price = price - total_fee;
-        buyer
+        buyer.transfer(sell_price);
+        emit SellShareEvent(buyer, yourFriend, sell_price);
     }
 
     //查询用户的price
@@ -83,7 +91,7 @@ contract FriendContract is OwnableUpgradeable {
     }
 
 
-    function initialize(address _plateform_address) public initializer {
+    function initialize(address payable _plateform_address) public initializer {
         isManager[msg.sender] = true;
         plateform_address = _plateform_address;
     }
@@ -107,6 +115,6 @@ contract FriendContract is OwnableUpgradeable {
     }
 
     function setPlatformPercent(uint _platformPercent) public onlyManager {
-        plateform_percent = _platformPercent;
+        platform_percent = _platformPercent;
     }
 }
