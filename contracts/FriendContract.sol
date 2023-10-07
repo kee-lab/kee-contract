@@ -9,8 +9,9 @@ import "./TickerContract.sol";
 contract FriendContract is OwnableUpgradeable {
     uint public DIV_NUM = 10000;
 
-    uint public user_pencent = 5;
-    uint public platform_percent =5;
+    uint public user_percent = 500;
+    uint public platform_percent =500;
+    address public plateform_address;
 
     //用户一定数量的eth购买另外一个朋友的share.需要eth的数量根据该用户所持的share数量决定.
     //price = k*k/10000 , k 为用户拥有的好友数.(用户拥有的share令牌的数量f)
@@ -44,6 +45,7 @@ contract FriendContract is OwnableUpgradeable {
         uint256 k = userFriendAmount[seller];
         uint price = k*k/DIV_NUM;
         require(buy >= price,"not enough token");
+        // 拥有该好友的share的数量增加一个。
         userFriendAmount[seller] = userFriendAmount[seller] + 1;
         address buyer = msg.sender;
         userFriends[seller][buyer] = true;
@@ -52,12 +54,25 @@ contract FriendContract is OwnableUpgradeable {
         //emit a event.
         emit BuyUserEvent(buyer,seller,price);
 
-        // TODO 分配5%的金额给seller,5%的费用给平台.
+        // 分配5%的金额给seller,5%的费用给平台.
+        uint user_share = price*user_percent/10000;
+        uint platform_share = price*platform_percent/10000;
+        seller.transfer(user_share);
+        //如果合约未初始化，是否可以进行转账。
+        plateform_address.transfer(plateform_share);
     }
 
     // TODO 用户卖出当前share
     function sellShare(address yourFriend)public{
-        
+        address buyer = msg.sender;
+        //确保用户有这个用户的share
+        require(userShares[buyer][seller],"no shares");
+        uint k = userFriendAmount[yourFriend]-1;
+        uint price = k*k/DIV_NUM;
+        uint total_share = user_percent + platform_percent;
+        uint total_fee = price * total_share / 10000;
+        uint sell_price = price - total_fee;
+        buyer
     }
 
     //查询用户的price
@@ -68,8 +83,9 @@ contract FriendContract is OwnableUpgradeable {
     }
 
 
-    function initialize() public initializer {
+    function initialize(address _plateform_address) public initializer {
         isManager[msg.sender] = true;
+        plateform_address = _plateform_address;
     }
 
     mapping(address => bool) public isManager;
@@ -83,4 +99,14 @@ contract FriendContract is OwnableUpgradeable {
         DIV_NUM = _divNum;
     }
 
+    // uint public user_pencent = 5;
+    // uint public platform_percent =5;
+
+    function setUserPercent(uint _userPercent) public onlyManager {
+        user_percent = _userPercent;
+    }
+
+    function setPlatformPercent(uint _platformPercent) public onlyManager {
+        plateform_percent = _platformPercent;
+    }
 }
