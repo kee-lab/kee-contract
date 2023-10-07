@@ -9,6 +9,9 @@ import "./TickerContract.sol";
 contract FriendContract is OwnableUpgradeable {
     uint public DIV_NUM = 10000;
 
+    uint public user_pencent = 5;
+    uint public platform_percent =5;
+
     //用户一定数量的eth购买另外一个朋友的share.需要eth的数量根据该用户所持的share数量决定.
     //price = k*k/10000 , k 为用户拥有的好友数.(用户拥有的share令牌的数量f)
 
