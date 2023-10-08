@@ -44,12 +44,12 @@ contract FriendContract is OwnableUpgradeable {
     //用户好友的share.
     function buyShare(address payable yourFriend) public payable{
         uint buy = msg.value;
+        // 拥有该好友的share的数量增加一个。
+        userFriendAmount[yourFriend] = userFriendAmount[yourFriend] + 1;
         //计算当前用户的share的价格
         uint256 k = userFriendAmount[yourFriend];
         uint price = k*k/DIV_NUM;
         require(buy >= price,"not enough token");
-        // 拥有该好友的share的数量增加一个。
-        userFriendAmount[yourFriend] = userFriendAmount[yourFriend] + 1;
         address buyer = msg.sender;
         userFriends[yourFriend][buyer] = true;
         userShares[buyer][yourFriend] = true;
@@ -72,7 +72,7 @@ contract FriendContract is OwnableUpgradeable {
         require(userShares[buyer][yourFriend],"no shares");
         userShares[buyer][yourFriend] = false;
         userFriends[yourFriend][buyer] = false;
-        uint k = userFriendAmount[yourFriend]-1;
+        uint k = userFriendAmount[yourFriend];
         userFriendAmount[yourFriend] = userFriendAmount[yourFriend]-1;
         uint price = k*k/DIV_NUM;
         uint total_share = user_percent + platform_percent;
@@ -84,8 +84,8 @@ contract FriendContract is OwnableUpgradeable {
     }
 
     //查询用户的price
-    function buyPrice(address seller)view public returns(uint256){
-        uint256 k = userFriendAmount[seller];
+    function sharePrice(address friend)view public returns(uint256){
+        uint256 k = userFriendAmount[friend];
         uint price = k*k/DIV_NUM;
         return price;
     }
