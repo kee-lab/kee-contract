@@ -6,6 +6,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 contract FriendContract is OwnableUpgradeable {
     uint public DIV_NUM = 10000;
 
+    uint ethDecimal = 1e18;
+
     uint public user_percent = 500;
     uint public platform_percent =500;
     address payable public plateform_address;
@@ -48,7 +50,7 @@ contract FriendContract is OwnableUpgradeable {
         userFriendAmount[yourFriend] = userFriendAmount[yourFriend] + 1;
         //计算当前用户的share的价格
         uint256 k = userFriendAmount[yourFriend];
-        uint price = k*k/DIV_NUM;
+        uint price = ethDecimal*k*k/DIV_NUM;
         require(buy >= price,"not enough token");
         address buyer = msg.sender;
         userFriends[yourFriend][buyer] = true;
@@ -74,7 +76,7 @@ contract FriendContract is OwnableUpgradeable {
         userFriends[yourFriend][buyer] = false;
         uint k = userFriendAmount[yourFriend];
         userFriendAmount[yourFriend] = userFriendAmount[yourFriend]-1;
-        uint price = k*k/DIV_NUM;
+        uint price = ethDecimal*k*k/DIV_NUM;
         uint total_share = user_percent + platform_percent;
         //卖出share所得的金额需要扣除手续费.注意,如果中途修改了比例,则手续费可能多扣.导致最后的退出者资金不足.
         uint total_fee = price * total_share / 10000;
@@ -85,8 +87,8 @@ contract FriendContract is OwnableUpgradeable {
 
     //查询用户的price
     function sharePrice(address friend)view public returns(uint256){
-        uint256 k = userFriendAmount[friend];
-        uint price = k*k/DIV_NUM;
+        uint256 k = userFriendAmount[friend]+1;
+        uint price = ethDecimal*k*k/DIV_NUM;
         return price;
     }
 

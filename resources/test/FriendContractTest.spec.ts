@@ -18,7 +18,7 @@ import exp from "constants";
 import { TickerContract } from "../types";
 const baseRatio = 10000;
 
-describe("Ticker contract init and test", () => {
+describe.only("Ticker contract init and test", () => {
 	const loadFixture = waffle.createFixtureLoader(
 		waffle.provider.getWallets(),
 		waffle.provider
@@ -30,7 +30,7 @@ describe("Ticker contract init and test", () => {
 		// await reaToken.initialize("REA token","REA");
 		
 		console.log("init friendContract!");
-		await friendContract.initialize(platFormAddress);
+		await friendContract.initialize(platFormAddress.address);
 		return {
 			wallet,
 			buyer,
@@ -41,10 +41,7 @@ describe("Ticker contract init and test", () => {
 	}
 
 	describe("buy share test", () => {
-		const token0Amount = expandTo18Decimals(5);
-		const token1Amount = expandTo18Decimals(10);
-		const tickerPayAmount = expandTo18Decimals(2);
-		const base = 10000;
+		const base:BigNumber = BigNumber.from("10000");
 		
 
 		it("buy/sell share one time", async () => {
@@ -63,20 +60,24 @@ describe("Ticker contract init and test", () => {
 
 
 			let friendSharePrice = await friendContract.sharePrice(friend.address);
-			
+			console.log("hardhat friendSharePrice is:",friendSharePrice.toNumber());
 			
 			//check the friendContract eth is zero
-			let blanceOfFriendContract = await ethers.balanceOf(friendContract.address);
-			expect(blanceOfFriendContract).to.be.equal(0);
-			
+			const provider = waffle.provider;
+			let balanceOfFriendContract = await provider.getBalance(friendContract.address);
+			expect(balanceOfFriendContract).to.be.equal(0);
+			let beforeBalanceFriend = await provider.getBalance(friend.address);
+			let beforeBalancePlatform = await provider.getBalance(platFormAddress.address);
+			console.log("hardhat beforeBalanceFriend is:",beforeBalanceFriend.toString());
 			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:1000})).to.be.revertedWith("not enough token");
-			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice})).to.emit(blanceOfFriendContract,"BuyShareEvent");
-			blanceOfFriendContract = await ethers.balanceOf(friendContract.address);
-			expect(blanceOfFriendContract).to.be.equal(friendSharePrice*(base-user_percent - platform_percent));
-			let balanceFriend = await ethers.balanceOf(friend.address);
-			expect(balanceFriend).to.be.equal(friendSharePrice*user_percent/base);
-			let balancePlatform = await ethers.balanceOf(platFormAddress.address);
-			expect(balancePlatform).to.be.equal(friendSharePrice*platform_percent/base);
+			expect(await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice})).to.emit(balanceOfFriendContract,"BuyShareEvent");
+			balanceOfFriendContract = await provider.getBalance(friendContract.address);
+			console.log("hardhat balanceOfFriendContract is:",balanceOfFriendContract.toString());
+			expect(balanceOfFriendContract).to.be.equal(friendSharePrice.mul(base.sub(user_percent).sub(platform_percent)).div(base));
+			let balanceFriend = await provider.getBalance(friend.address);
+			expect(balanceFriend).to.be.equal(friendSharePrice.mul(user_percent).div(base).add(beforeBalanceFriend));
+			let balancePlatform = await provider.getBalance(platFormAddress.address);
+			expect(balancePlatform).to.be.equal(friendSharePrice.mul(platform_percent).div(base).add(beforeBalancePlatform));
 			//sell share
 		});
 	});
