@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "hardhat/console.sol";
 
 contract FriendContract is OwnableUpgradeable {
     uint public DIV_NUM = 10000;
@@ -64,10 +65,12 @@ contract FriendContract is OwnableUpgradeable {
         uint platform_share = price*platform_percent/10000;
         yourFriend.transfer(user_share);
         //如果合约未初始化，是否可以进行转账。
+        console.log(plateform_address);
+        require(plateform_address!=address(0),"trans 0 addr");
         plateform_address.transfer(platform_share);
     }
 
-    // TODO 用户卖出当前share
+    // 用户卖出当前share
     function sellShare(address yourFriend)public{
         address payable  buyer = payable(msg.sender);
         //确保用户有这个用户的share

@@ -27,10 +27,10 @@ describe.only("Ticker contract init and test", () => {
 	async function v2Fixture([wallet,buyer, friend,platFormAddress,address4,address5,address6]: Wallet[], provider: MockProvider) {
 		const myFriendContract = await ethers.getContractFactory("FriendContract");
 		const friendContract = await myFriendContract.deploy();
-		// await reaToken.initialize("REA token","REA");
+		await friendContract.deployed();
 		
 		console.log("init friendContract!");
-		await friendContract.initialize(platFormAddress.address);
+		
 		return {
 			wallet,
 			buyer,
@@ -57,10 +57,11 @@ describe.only("Ticker contract init and test", () => {
 			expect(user_percent).to.be.equal(500);
 			let platform_percent = await friendContract.platform_percent();
 			expect(platform_percent).to.be.equal(500);
-
-
 			let friendSharePrice = await friendContract.sharePrice(friend.address);
 			console.log("hardhat friendSharePrice is:",friendSharePrice.toNumber());
+			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice})).to.be.revertedWith("trans 0 addr");
+			await friendContract.initialize(platFormAddress.address);
+
 			
 			//check the friendContract eth is zero
 			const provider = waffle.provider;
@@ -70,7 +71,14 @@ describe.only("Ticker contract init and test", () => {
 			let beforeBalancePlatform = await provider.getBalance(platFormAddress.address);
 			console.log("hardhat beforeBalanceFriend is:",beforeBalanceFriend.toString());
 			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:1000})).to.be.revertedWith("not enough token");
-			expect(await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice})).to.emit(balanceOfFriendContract,"BuyShareEvent");
+			// expect(await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice}))
+			// 	.to.emit(balanceOfFriendContract,"BuyShareEvent");
+			const buyTx = await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice});
+			await expect(buyTx)
+				.to.emit(friendContract, "BuyShareEvent")
+				.withArgs(buyer.address,friend.address,friendSharePrice);
+
+
 			balanceOfFriendContract = await provider.getBalance(friendContract.address);
 			console.log("hardhat balanceOfFriendContract is:",balanceOfFriendContract.toString());
 			expect(balanceOfFriendContract).to.be.equal(friendSharePrice.mul(base.sub(user_percent).sub(platform_percent)).div(base));
@@ -78,7 +86,16 @@ describe.only("Ticker contract init and test", () => {
 			expect(balanceFriend).to.be.equal(friendSharePrice.mul(user_percent).div(base).add(beforeBalanceFriend));
 			let balancePlatform = await provider.getBalance(platFormAddress.address);
 			expect(balancePlatform).to.be.equal(friendSharePrice.mul(platform_percent).div(base).add(beforeBalancePlatform));
+			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:1000})).to.be.revertedWith("not enough token");
+
 			//sell share
+			console.log("start sell share------------------------");
+			await expect(friendContract.connect(wallet).sellShare(friend.address,{from:wallet.address})).to.be.revertedWith("no shares");
+			const sellTx = await friendContract.connect(buyer).sellShare(friend.address,{from:buyer.address});
+			await expect(sellTx)
+				.to.emit(friendContract, "SellShareEvent")
+				.withArgs(buyer.address,friend.address,friendSharePrice.mul(base.sub(user_percent).sub(platform_percent)).div(base));
+
 		});
 	});
 
