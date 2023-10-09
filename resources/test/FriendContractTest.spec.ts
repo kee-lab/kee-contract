@@ -53,9 +53,9 @@ describe.only("Ticker contract init and test", () => {
 			} = await loadFixture(
 				v2Fixture
 			);
-			let user_percent = await friendContract.user_percent();
+			let user_percent = await friendContract.user_buy_fee_ratio();
 			expect(user_percent).to.be.equal(500);
-			let platform_percent = await friendContract.platform_percent();
+			let platform_percent = await friendContract.platform_buy_fee_ratio();
 			expect(platform_percent).to.be.equal(500);
 			let friendSharePrice = await friendContract.sharePrice(friend.address);
 			console.log("hardhat friendSharePrice is:",friendSharePrice.toNumber());
@@ -71,8 +71,6 @@ describe.only("Ticker contract init and test", () => {
 			let beforeBalancePlatform = await provider.getBalance(platFormAddress.address);
 			console.log("hardhat beforeBalanceFriend is:",beforeBalanceFriend.toString());
 			await expect(friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:1000})).to.be.revertedWith("not enough token");
-			// expect(await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice}))
-			// 	.to.emit(balanceOfFriendContract,"BuyShareEvent");
 			const buyTx = await friendContract.connect(buyer).buyShare(friend.address,{from:buyer.address,value:friendSharePrice});
 			await expect(buyTx)
 				.to.emit(friendContract, "BuyShareEvent")
@@ -95,7 +93,7 @@ describe.only("Ticker contract init and test", () => {
 			await expect(sellTx)
 				.to.emit(friendContract, "SellShareEvent")
 				.withArgs(buyer.address,friend.address,friendSharePrice.mul(base.sub(user_percent).sub(platform_percent)).div(base));
-
+			
 		});
 	});
 
