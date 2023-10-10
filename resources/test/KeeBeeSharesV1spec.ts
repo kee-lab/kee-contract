@@ -18,25 +18,25 @@ import exp from "constants";
 import { TickerContract } from "../types";
 const baseRatio = 10000;
 
-describe("Ticker contract init and test", () => {
+describe.only("Ticker contract init and test", () => {
 	const loadFixture = waffle.createFixtureLoader(
 		waffle.provider.getWallets(),
 		waffle.provider
 	);
 
 	async function v2Fixture([wallet,buyer, friend,platFormAddress,address4,address5,address6]: Wallet[], provider: MockProvider) {
-		const myFriendContract = await ethers.getContractFactory("FriendContract");
-		const friendContract = await myFriendContract.deploy();
-		await friendContract.deployed();
+		const KeeBeeSharesV1Contract = await ethers.getContractFactory("KeeBeeSharesV1");
+		const KeeBeeSharesV1 = await KeeBeeSharesV1Contract.deploy();
+		await KeeBeeSharesV1.deployed();
 		
-		console.log("init friendContract!");
+		console.log("init KeeBeeSharesV1!");
 		
 		return {
 			wallet,
 			buyer,
 			friend,
 			platFormAddress,
-			friendContract,
+			KeeBeeSharesV1,
 		};
 	}
 
@@ -47,12 +47,12 @@ describe("Ticker contract init and test", () => {
 				buyer,
 				friend,
 				platFormAddress,
-				friendContract,
+				KeeBeeSharesV1,
 			} = await loadFixture(
 				v2Fixture
 			);
-			let user_buy_fee_ratio = await friendContract.user_buy_fee_ratio();
-			expect(user_buy_fee_ratio).to.be.equal(500);
+			let protocolFeePercent = await KeeBeeSharesV1.protocolFeePercent();
+			expect(protocolFeePercent).to.be.equal(500);
 			let platform_buy_fee_ratio = await friendContract.platform_buy_fee_ratio();
 			expect(platform_buy_fee_ratio).to.be.equal(500);
 

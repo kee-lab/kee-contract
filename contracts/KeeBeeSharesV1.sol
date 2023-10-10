@@ -1,15 +1,28 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "hardhat/console.sol";
 
 
 
-contract KeeBeeSharesV1 is Ownable {
+contract KeeBeeSharesV1 is OwnableUpgradeable {
     address public protocolFeeDestination;
-    uint256 public protocolFeePercent;
-    uint256 public subjectFeePercent;
+    uint256 public protocolFeePercent=5;
+    uint256 public subjectFeePercent=5;
+    uint256 public maxAmount=1;
+
+    function initialize(address payable _protocolFeeDestination) public initializer {
+        isManager[msg.sender] = true;
+        protocolFeeDestination = _protocolFeeDestination;
+    }
+
+    mapping(address => bool) public isManager;
+    //onlyManager
+    modifier onlyManager() {
+        require(isManager[msg.sender], "Not manager");
+        _;
+    }
 
     event Trade(address trader, address subject, bool isBuy, uint256 shareAmount, uint256 ethAmount, uint256 protocolEthAmount, uint256 subjectEthAmount, uint256 supply);
 
@@ -18,6 +31,10 @@ contract KeeBeeSharesV1 is Ownable {
 
     // SharesSubject => Supply
     mapping(address => uint256) public sharesSupply;
+
+    function setMaxAmount(uint256 _maxAmount) public onlyOwner{
+        maxAmount = _maxAmount;
+    }
 
     function setFeeDestination(address _feeDestination) public onlyOwner {
         protocolFeeDestination = _feeDestination;
