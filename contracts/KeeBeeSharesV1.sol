@@ -8,9 +8,11 @@ import "hardhat/console.sol";
 
 contract KeeBeeSharesV1 is OwnableUpgradeable {
     address public protocolFeeDestination;
-    uint256 public protocolFeePercent=5;
-    uint256 public subjectFeePercent=5;
+    uint256 public protocolFeePercent=50000000000000000;
+    uint256 public subjectFeePercent=50000000000000000;
+    // user can buy max amount shares
     uint256 public maxAmount=1;
+    uint256 public maxFeePercent = 100000000000000000;
 
     function initialize(address payable _protocolFeeDestination) public initializer {
         isManager[msg.sender] = true;
@@ -32,23 +34,24 @@ contract KeeBeeSharesV1 is OwnableUpgradeable {
     // SharesSubject => Supply
     mapping(address => uint256) public sharesSupply;
 
-    function setMaxAmount(uint256 _maxAmount) public onlyOwner{
+    function setMaxAmount(uint256 _maxAmount) public onlyManager{
         maxAmount = _maxAmount;
     }
 
-    function setFeeDestination(address _feeDestination) public onlyOwner {
+    function setFeeDestination(address _feeDestination) public onlyManager {
         protocolFeeDestination = _feeDestination;
     }
 
-    function setProtocolFeePercent(uint256 _feePercent) public onlyOwner {
+    function setProtocolFeePercent(uint256 _feePercent) public onlyManager {
         protocolFeePercent = _feePercent;
     }
 
-    function setSubjectFeePercent(uint256 _feePercent) public onlyOwner {
+    function setSubjectFeePercent(uint256 _feePercent) public onlyManager {
         subjectFeePercent = _feePercent;
     }
 
-    function getPrice(uint256 supply, uint256 amount) public pure returns (uint256) {
+    function getPrice(uint256 supply, uint256 amount) public view returns (uint256) {
+        require(amount<=maxAmount,"amount too high");
         uint256 sum1 = supply == 0 ? 0 : (supply - 1 )* (supply) * (2 * (supply - 1) + 1) / 6;
         uint256 sum2 = supply == 0 && amount == 1 ? 0 : (supply - 1 + amount) * (supply + amount) * (2 * (supply - 1 + amount) + 1) / 6;
         uint256 summation = sum2 - sum1;
