@@ -11,7 +11,7 @@ contract KeeBeeSharesV1 is OwnableUpgradeable {
     uint256 public protocolFeePercent=50000000000000000;
     uint256 public subjectFeePercent=50000000000000000;
     // user can buy max amount shares
-    uint256 public maxAmount=1;
+    uint256 public maxAmount = 1;
     uint256 public maxFeePercent = 100000000000000000;
 
     function initialize(address payable _protocolFeeDestination) public initializer {

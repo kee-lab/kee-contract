@@ -187,6 +187,24 @@ describe.only("Ticker contract init and test", () => {
 
 			balanceOfFriendContract = await provider.getBalance(keeBeeSharesV1Contract.address);
 			expect(balanceOfFriendContract).to.be.equal(0);
+		});
+		it("get price", async () => {
+			const {wallet, 
+				buyer,
+				friend,
+				platFormAddress,
+				keeBeeSharesV1:keeBeeSharesV1Contract,
+			} = await loadFixture(
+				v2Fixture
+			);
+			const ether1 = ethers.utils.parseEther("1");
+
+			await keeBeeSharesV1Contract.initialize(platFormAddress.address);
+			let price;
+			for(let i=1;i<=100;i++){
+				price = await keeBeeSharesV1Contract.getPrice(i,1);
+				console.log("i is: price is:",i,price.toString());
+			}
 			
 		});
 	});
