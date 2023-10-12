@@ -133,11 +133,15 @@ describe.only("Ticker contract init and test", () => {
 			console.log("hardhat price is:",price.toString());
 
 			let buyShareTx1 = await keeBeeSharesV1Contract.connect(friend).buyShares(friend.address,1,{from:friend.address,value:buySharePrice});
+			supply = await keeBeeSharesV1Contract.sharesSupply(friend.address);
+			console.log("hardhat supply -----------------------1 is:",supply.toString());
+			expect(supply).to.be.equal(1);
+			
 			let protocolFee = price.mul(protocolFeePercent).div(ether1);
 			expect(protocolFee).to.be.equal(0);
 			let subjectFee = price.mul(subjectFeePercent).div(ether1);
 			expect(subjectFee).to.be.equal(0);
-			await expect(buyShareTx1).to.emit(keeBeeSharesV1Contract,"Trade").withArgs(friend.address,friend.address,true,1,price,protocolFee,subjectFee,supply.add(1));
+			await expect(buyShareTx1).to.emit(keeBeeSharesV1Contract,"Trade").withArgs(friend.address,friend.address,true,1,price,protocolFee,subjectFee,supply);
 			buySharePrice = await keeBeeSharesV1Contract.getBuyPrice(friend.address,1);
 			console.log("hardhat buySharePrice is:",buySharePrice.toString());
 			let friendBalance = await provider.getBalance(friend.address);
@@ -154,8 +158,13 @@ describe.only("Ticker contract init and test", () => {
 			protocolFee = price.mul(protocolFeePercent).div(ether1);
 			subjectFee = price.mul(subjectFeePercent).div(ether1);
 			let initPlatForm = await provider.getBalance(platFormAddress.address);
-			let buyShareTx3 = await keeBeeSharesV1Contract.connect(buyer).buyShares(friend.address,1,{from:buyer.address,value:getBuyPriceAfterFee});
-			await expect(buyShareTx3).to.emit(keeBeeSharesV1Contract,"Trade").withArgs(buyer.address,friend.address,true,1,price,protocolFee,subjectFee,supply.add(1));
+			let buyShareTx2 = await keeBeeSharesV1Contract.connect(buyer).buyShares(friend.address,1,{from:buyer.address,value:getBuyPriceAfterFee});
+
+			supply = await keeBeeSharesV1Contract.sharesSupply(friend.address);
+			console.log("hardhat supply -----------------------2 is:",supply.toString());
+			expect(supply).to.be.equal(2);
+
+			await expect(buyShareTx2).to.emit(keeBeeSharesV1Contract,"Trade").withArgs(buyer.address,friend.address,true,1,price,protocolFee,subjectFee,supply);
 			let balancePlatForm = await provider.getBalance(platFormAddress.address);
 			expect(protocolFee).to.be.equal(balancePlatForm.sub(initPlatForm));
 
@@ -165,7 +174,20 @@ describe.only("Ticker contract init and test", () => {
 			let sellTx = await keeBeeSharesV1Contract.connect(buyer).sellShares(friend.address,1,{from:buyer.address});
 
 			// TODO check the sell result and events
+			supply = await keeBeeSharesV1Contract.sharesSupply(friend.address);
+			expect(supply).to.be.equal(1);
+			console.log("hardhat supply is:",supply.toString());
+			price = await keeBeeSharesV1Contract.getPrice(supply,1);
+			console.log("hardhat price is:",price.toString());
+			protocolFee = price.mul(protocolFeePercent).div(ether1);
+			subjectFee = price.mul(subjectFeePercent).div(ether1);
+			await expect(sellTx).to.emit(keeBeeSharesV1Contract,"Trade").withArgs(buyer.address,friend.address,false,1,price,protocolFee,subjectFee,supply);
+			balancePlatForm = await provider.getBalance(platFormAddress.address);
+			expect(balancePlatForm).to.be.equal(initPlatForm.add(protocolFee).add(protocolFee));
 
+			balanceOfFriendContract = await provider.getBalance(keeBeeSharesV1Contract.address);
+			expect(balanceOfFriendContract).to.be.equal(0);
+			
 		});
 	});
 });
